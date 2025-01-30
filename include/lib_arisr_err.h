@@ -18,38 +18,40 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
  **********************************************************************************
- * @file lib_arisr.h
- * @brief This file contains the headers of the ARISr library.
+ * @file lib_arisr_err.h
+ * @brief This file contains error code and message definitions for the ARISr protocol.
  * @date 2025-01-30
  * @authors ARIS Alliance
 */
 
-#ifndef LIB_ARISR_H
-#define LIB_ARISR_H
+#ifndef LIB_ARISR_ERR_H
+#define LIB_ARISR_ERR_H
 
 #include <stdint.h>
+
 #include "lib_arisr_base.h"
-#include "lib_arisr_interface.h"
-#include "lib_arisr_comm.h"
 
-/**
- * @brief Get the field of the control section
- * @param ctrl
- * @param offset
- * @param mask
- * @return ARISR_UINT8
- */
-ARISR_UINT8 ARISR_proto_ctrl_getField(void *ctrl, ARISR_UINT8 offset, ARISR_UINT8 mask);
+/******************************************************************************/
+//
+// TYPES
+//
 
-/**
- * @brief Receive the ARISr protocol
- * @param buffer
- * @param data
- * @return ARISR_ERR
- */
-ARISR_ERR ARISR_proto_recv(ARISR_CHUNK_RAW *buffer, char *data);
+typedef ARISR_UINT32	ARISR_ERR;
+
+/******************************************************************************/
+//
+// GENERIC ERROR CODES
+//
+
+#define kARISR_OK					    (ARISR_ERR)0
+#define kARISR_ERR_GENERIC			    (ARISR_ERR)1
+#define kARISR_ERR_NOT_SAME_ID		    (ARISR_ERR)2
+#define kARISR_ERR_NOT_SAME_ARIS	    (ARISR_ERR)3
+#define kARISR_ERR_NOT_SAME_CRC_HEADER	(ARISR_ERR)4
+#define kARISR_ERR_NOT_SAME_CRC_DATA	(ARISR_ERR)5
+
+
 
 #endif
-
 
 /* COPYRIGHT ARIS Alliance */
