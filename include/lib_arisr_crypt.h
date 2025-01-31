@@ -24,8 +24,8 @@
  * @authors ARIS Alliance
 */
 
-#ifndef LIB_ARISR_ERR_H
-#define LIB_ARISR_ERR_H
+#ifndef LIB_ARISR_CRYPT_H
+#define LIB_ARISR_CRYPT_H
 
 #include <stdio.h>
 #include <stdint.h>
@@ -55,13 +55,72 @@ static const ARISR_UINT16 crc16_table[256] = {
 };
 
 /**
- * @brief Calculate the CRC16 of the data
- * @param data
- * @param length
- * @return ARISR_UINT16
+ * @brief Computes the CRC-16 checksum for the given data buffer.
+ *
+ * This function calculates a **16-bit Cyclic Redundancy Check (CRC-16)**
+ * over a given data buffer. CRC-16 is commonly used for error detection in
+ * communication protocols and data integrity verification.
+ *
+ * The specific polynomial and initial value used should be documented elsewhere
+ * in the cryptographic implementation details.
+ *
+ * @param data   Pointer to the input data buffer to be processed.
+ * @param length Number of bytes in the data buffer.
+ * @return The computed 16-bit CRC value as an ARISR_UINT16.
+ *
+ * @note Ensure that the provided `data` pointer is valid and `length` is greater than zero.
+ *       If `data` is NULL or `length` is 0, the behavior may be undefined.
+ *
+ * @warning The CRC calculation might differ depending on the chosen polynomial, bit order,
+ *          and initial value. Ensure compatibility with expected CRC implementations.
  */
-ARISR_UINT16 ARISR_crypt_crc16_calculate(const uint8_t *data, ARISR_UINT32 length);
+ARISR_UINT16 ARISR_crypt_crc16_calculate(const ARISR_UINT8 *data, const ARISR_UINT32 length);
 
+
+
+// =================================================================================================
+
+// AES-128
+#define ARISR_AES128_BLOCK_SIZE 16
+#define ARISR_AES128_KEY_SIZE   128
+
+#pragma pack(1)
+typedef 
+    ARISR_UINT8 ARISR_AES128_KEY[ARISR_AES128_BLOCK_SIZE];
+#pragma pack()
+
+/**
+ * @brief Performs a cyclic subtraction (mod 256) on the 4-byte 'aris' array using the last byte of a 16-byte AES key.
+ *
+ * This function retrieves the last byte from the 16-byte AES key (index 15),
+ * then for each of the four bytes in 'aris', subtracts that byte mod 256.
+ * 
+ * If the final 'aris' matches the ASCII string "ARIS", it returns kARISR_OK;
+ * otherwise, kARISR_ERR_GENERIC.
+ *
+ * @param key   A 16-byte AES-128 key (constant array).
+ * @param aris  A 4-byte array to be modified in place via cyclic subtraction.
+ * @return kARISR_OK if 'aris' becomes "ARIS" after the subtraction,
+ *         otherwise kARISR_ERR_GENERIC.
+ */
+ARISR_ERR ARISR_aes_aris_decrypt(const ARISR_AES128_KEY *key, const ARISR_UINT8 *aris);
+
+/**
+ * @brief Encrypts the 4-byte 'aris' array by adding the last byte of a 128-bit (16-byte) AES key.
+ *
+ * This function retrieves the last byte from the 16-byte AES key (index 15),
+ * then for each of the four bytes in 'aris', adds that byte (mod 256).
+ * 
+ * The result is placed in 'aris' (in-place). This mirrors the decryption function
+ * which subtracts the same byte. Decryption + Encryption should restore the original
+ * "ARIS" string if used correctly.
+ *
+ * @param key   Pointer to a 16-byte AES-128 key union.
+ * @param aris  A 4-byte buffer to be modified in place by adding the last byte of 'key'.
+ * @return kARISR_OK if the encryption process succeeds,
+ *         otherwise kARISR_ERR_GENERIC if inputs are null.
+ */
+ARISR_ERR ARISR_aes_aris_encrypt(const ARISR_AES128_KEY *key, ARISR_UINT8 *aris);
 
 #endif
 

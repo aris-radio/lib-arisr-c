@@ -32,22 +32,37 @@
 #include "lib_arisr_interface.h"
 #include "lib_arisr_comm.h"
 
-/**
- * @brief Get the field of the control section
- * @param ctrl
- * @param offset
- * @param mask
- * @return ARISR_UINT8
- */
-ARISR_UINT8 ARISR_proto_ctrl_getField(void *ctrl, ARISR_UINT8 offset, ARISR_UINT8 mask);
 
 /**
- * @brief Receive the ARISr protocol
- * @param buffer
- * @param data
- * @return ARISR_ERR
+ * @brief Cleans (resets) the raw chunk buffer, freeing any allocated memory.
+ *
+ * @param buffer Pointer to the ARISR_CHUNK_RAW structure.
+ * @return kARISR_OK on success, or kARISR_ERR_GENERIC if buffer is NULL.
  */
-ARISR_ERR ARISR_proto_recv(ARISR_CHUNK_RAW *buffer, char *data);
+ARISR_ERR ARISR_proto_raw_chunk_clean(ARISR_CHUNK_RAW *buffer);
+
+/**
+ * @brief Retrieves specific bits from a 32-bit control structure, using offset and mask.
+ *
+ * @param ctrl   Pointer to an ARISR_CHUNK_CTRL_RAW.
+ * @param offset Bit offset to start from.
+ * @param mask   Bit mask to apply after shifting.
+ * @return The extracted bits as an 8-bit value.
+ */
+inline ARISR_UINT8 ARISR_proto_ctrl_getField(const void *ctrl, ARISR_UINT8 offset, ARISR_UINT8 mask);
+
+/**
+ * @brief Receives and parses raw data into an ARISR_CHUNK_RAW structure.
+ *
+ * This function reads the incoming data byte by byte, separating the protocol fields,
+ * allocating memory where needed, and checking the CRC values for both header and data.
+ *
+ * @param buffer Pointer to the ARISR_CHUNK_RAW structure where parsed data will be stored.
+ * @param data   Pointer to the raw input data buffer (e.g., from the network or file).
+ * @return kARISR_OK on success, or an error code for invalid parameters, CRC mismatch, etc.
+ */
+ARISR_ERR ARISR_proto_recv(ARISR_CHUNK_RAW *buffer, const char *data, const ARISR_AES128_KEY *key);
+
 
 #endif
 

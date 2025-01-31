@@ -25,9 +25,13 @@
 */
 
 #include "lib_arisr_base.h"
+#include "lib_arisr_err.h"
+#include "lib_arisr_interface.h"
 #include "lib_arisr_crypt.h"
 
-ARISR_UINT16 ARISR_crypt_crc16_calculate(const uint8_t *data, ARISR_UINT32 length) {
+// =============================================
+ARISR_UINT16 ARISR_crypt_crc16_calculate(const ARISR_UINT8 *data, const ARISR_UINT32 length) 
+{
     ARISR_UINT16 crc = CRC16_INITIAL_VALUE;
 
     for (ARISR_UINT32 i = 0; i < length; i++) {
@@ -36,5 +40,52 @@ ARISR_UINT16 ARISR_crypt_crc16_calculate(const uint8_t *data, ARISR_UINT32 lengt
     }
     return crc;
 }
+
+
+// =============================================
+ARISR_ERR ARISR_aes_aris_decrypt(const ARISR_AES128_KEY *key, const ARISR_UINT8 *aris) 
+{
+    ARISR_UINT8 i;
+
+    if (!key || !aris) {
+        return kARISR_ERR_GENERIC;
+    }
+
+    ARISR_UINT8 result[ARISR_PROTO_ARIS_SIZE];
+
+    // Las byte (16 bytes → index 15)
+    ARISR_UINT8 last_byte = key[ARISR_AES128_BLOCK_SIZE - 1];
+
+    for (i = 0; i < ARISR_PROTO_ARIS_SIZE; i++) 
+        result[i] = (ARISR_UINT8)(aris[i] - last_byte);
+    
+
+    // Verify 'A' 'R' 'I' 'S'
+    if (result[0] == ARISR_PROTO_ARIS_TEXT[0] && result[1] == ARISR_PROTO_ARIS_TEXT[1] && result[2] == ARISR_PROTO_ARIS_TEXT[2] && result[3] == ARISR_PROTO_ARIS_TEXT[3]) {
+        return kARISR_OK;
+    }
+
+    return kARISR_ERR_NOT_SAME_ARIS;
+}
+
+// =============================================
+ARISR_ERR ARISR_aes_aris_encrypt(const ARISR_AES128_KEY *key, ARISR_UINT8 *aris) 
+{
+    ARISR_UINT8 i;
+
+    if (!key || !aris) {
+        return kARISR_ERR_GENERIC;
+    }
+
+    ARISR_UINT8 last_byte = key[ARISR_AES128_BLOCK_SIZE - 1];
+
+    for (i = 0; i < ARISR_PROTO_ARIS_SIZE; i++) {
+        aris[i] = (ARISR_UINT8)(aris[i] + last_byte);
+    }
+
+    // No hay verificación aquí, pues es cifrado. Simplemente retornamos OK.
+    return kARISR_OK;
+}
+
 
 /* COPYRIGHT ARIS Alliance */

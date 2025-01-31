@@ -38,6 +38,9 @@
     Protocol interface: ../docs/ARISRadioProtocol.pdf
 */
 
+#define ARISR_PROTO_ARIS_TEXT       "ARIS"
+#define ARISR_PROTO_ARIS_SIZE       4
+
 #define ARISR_PROTO_CRYPT_SIZE      8
 #define ARISR_PROTO_ID_SIZE         4
 
@@ -122,7 +125,7 @@ typedef struct {
 #pragma pack()
 
 
-typedef struct {
+typedef struct __attribute__((packed)) {
     ARISR_UINT8 id[4];                                  // 4 Bytes
     ARISR_UINT8 aris[4];                                // 4 Bytes
     ARISR_CHUNK_CTRL_RAW *ctrl;                         // 4 Bytes

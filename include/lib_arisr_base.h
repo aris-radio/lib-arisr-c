@@ -71,23 +71,23 @@
 typedef unsigned char   ARISR_UINT8;
 typedef char            ARISR_SINT8;
 typedef unsigned short	ARISR_UINT16;
-typedef short			ARISR_SINT16;
-typedef unsigned int	ARISR_UINT32;
-typedef int				ARISR_SINT32;
+typedef short			      ARISR_SINT16;
+typedef unsigned int	  ARISR_UINT32;
+typedef int				      ARISR_SINT32;
 #elif defined(ARISR_ENV_UNIX)
 typedef unsigned char   ARISR_UINT8;
 typedef char            ARISR_SINT8;
-typedef unsigned int	ARISR_UINT16;
-typedef int 			ARISR_SINT16;
-typedef unsigned long	ARISR_UINT32;
-typedef long			ARISR_SINT32;
+typedef unsigned int	  ARISR_UINT16;
+typedef int 			      ARISR_SINT16;
+typedef unsigned long 	ARISR_UINT32;
+typedef long			      ARISR_SINT32;
 #else
 typedef uint8_t         ARISR_UINT8;
 typedef int8_t          ARISR_SINT8;
-typedef uint16_t    	ARISR_UINT16;
-typedef int16_t 		ARISR_SINT16;
-typedef uint32_t    	ARISR_UINT32;
-typedef int32_t			ARISR_SINT32;
+typedef uint16_t    	  ARISR_UINT16;
+typedef int16_t 		    ARISR_SINT16;
+typedef uint32_t    	  ARISR_UINT32;
+typedef int32_t			    ARISR_SINT32;
 #endif
 
 // NB not used by all library code!
@@ -101,18 +101,18 @@ typedef ARISR_UINT32 ARISR_UCHAR; // unicode character
 
 #define ARISR_SIZE_OF_UINT8	    3	/* 0..255    */
 #define ARISR_SIZE_OF_SINT8	    4	/* -127..128 */
-#define ARISR_SIZE_OF_UINT16	5	/* 0-65535   */
-#define ARISR_SIZE_OF_SINT16	6
+#define ARISR_SIZE_OF_UINT16	  5	/* 0-65535   */
+#define ARISR_SIZE_OF_SINT16	  6
 
-#define ARISR_SIZE_OF_UINT24	8
+#define ARISR_SIZE_OF_UINT24	  8
 
-#define ARISR_SIZE_OF_UINT32	10
-#define ARISR_SIZE_OF_SINT32	11
+#define ARISR_SIZE_OF_UINT32	  10
+#define ARISR_SIZE_OF_SINT32	  11
 
-#define ARISR_MAX_UINT8		    0xff
-#define ARISR_MAX_UINT16		0xffff
-#define ARISR_MAX_UINT24		0xffffffL
-#define ARISR_MAX_UINT32		0xffffffffL
+#define ARISR_MAX_UINT8		      0xff
+#define ARISR_MAX_UINT16		    0xffff
+#define ARISR_MAX_UINT24		    0xffffffL
+#define ARISR_MAX_UINT32		    0xffffffffL
 
 
 /******************************************************************************/
@@ -120,16 +120,16 @@ typedef ARISR_UINT32 ARISR_UCHAR; // unicode character
 // CONSTANTS (ASCII CHARACTERS)
 //
 
-#define kARISR_ASCII_NULL			0x00
-#define kARISR_ASCII_HT			    0x09
-#define kARISR_ASCII_LF			    0x0A
-#define kARISR_ASCII_CR			    0x0D
-#define kARISR_ASCII_SP			    0x20
+#define kARISR_ASCII_NULL			      0x00
+#define kARISR_ASCII_HT			        0x09
+#define kARISR_ASCII_LF			        0x0A
+#define kARISR_ASCII_CR			        0x0D
+#define kARISR_ASCII_SP			        0x20
 
-#define kARISR_ASCII_QUOTE			0x22
+#define kARISR_ASCII_QUOTE			    0x22
 #define kARISR_ASCII_APOSTROPHE	    0x27
-#define kARISR_ASCII_FORWARDSLASH	0x2F
-#define kARISR_ASCII_BACKSLASH		0x5C
+#define kARISR_ASCII_FORWARDSLASH	  0x2F
+#define kARISR_ASCII_BACKSLASH		  0x5C
 
 /******************************************************************************/
 //

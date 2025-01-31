@@ -38,9 +38,7 @@
 /* ******************************************************** */
 // Define data struct
 #pragma pack(1)
-typedef union {
-    ARISR_UINT8 bytes[6];
-} ARISR_UINT48;
+typedef ARISR_UINT8 ARISR_UINT48[6];
 #pragma pack()
 
 // Set Integer To value
@@ -51,7 +49,7 @@ typedef union {
  */
 static inline void ARISR_UINT48_Set(ARISR_UINT48 *data, const uint8_t *buffer) {
     if (data && buffer) {
-        memcpy(data->bytes, buffer, 6);
+        memcpy(data, buffer, 6);
     }
 }
 
@@ -64,7 +62,7 @@ static inline void ARISR_UINT48_Set(ARISR_UINT48 *data, const uint8_t *buffer) {
 static inline int64_t ARISR_UINT48_GetInt(const ARISR_UINT48 *data) {
     int64_t resultado = 0;
     if (data) {
-        memcpy(&resultado, data->bytes, 6);
+        memcpy(&resultado, data, 6);
     }
     return resultado;
 }
