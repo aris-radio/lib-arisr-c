@@ -28,9 +28,13 @@
 #define LIB_ARISR_H
 
 #include <stdint.h>
+
 #include "lib_arisr_base.h"
 #include "lib_arisr_interface.h"
 #include "lib_arisr_comm.h"
+#include "lib_arisr_err.h"
+#include "lib_arisr_crypt.h"
+#include "lib_arisr.h"
 
 
 /**
@@ -45,11 +49,11 @@ ARISR_ERR ARISR_proto_raw_chunk_clean(ARISR_CHUNK_RAW *buffer);
  * @brief Retrieves specific bits from a 32-bit control structure, using offset and mask.
  *
  * @param ctrl   Pointer to an ARISR_CHUNK_CTRL_RAW.
- * @param offset Bit offset to start from.
  * @param mask   Bit mask to apply after shifting.
+ * @param shift  Bit offset to start from to the last byte.
  * @return The extracted bits as an 8-bit value.
  */
-inline ARISR_UINT8 ARISR_proto_ctrl_getField(const void *ctrl, ARISR_UINT8 offset, ARISR_UINT8 mask);
+ARISR_UINT8 ARISR_proto_ctrl_getField(const ARISR_UINT8 *ctrl, ARISR_UINT32 mask, ARISR_UINT8 shift);
 
 /**
  * @brief Receives and parses raw data into an ARISR_CHUNK_RAW structure.
@@ -61,7 +65,7 @@ inline ARISR_UINT8 ARISR_proto_ctrl_getField(const void *ctrl, ARISR_UINT8 offse
  * @param data   Pointer to the raw input data buffer (e.g., from the network or file).
  * @return kARISR_OK on success, or an error code for invalid parameters, CRC mismatch, etc.
  */
-ARISR_ERR ARISR_proto_recv(ARISR_CHUNK_RAW *buffer, const char *data, const ARISR_AES128_KEY *key);
+ARISR_ERR ARISR_proto_recv(ARISR_CHUNK_RAW *buffer, const ARISR_UINT8 *data, const ARISR_AES128_KEY key);
 
 
 #endif

@@ -38,7 +38,7 @@
 // ARISR_ENV_UNIX	(Target = UNIX)
 
 
-#ifdef _WIN32 || _WIN64
+#if defined(_WIN32) || defined(_WIN64)
 /* Win32 */
 #define ARISR_ENV_WIN32
 #elif defined(__unix__)

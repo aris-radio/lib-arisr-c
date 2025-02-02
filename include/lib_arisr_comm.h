@@ -93,8 +93,8 @@ typedef struct {
     ARISR_UINT48 origin;                // 6 Bytes
     ARISR_UINT48 destinationA;          // 6 Bytes
     ARISR_UINT48 *destinationsB;        // ... n*6 Bytes
-    ARISR_UINT48 *destinationC;         // 6 Bytes
-    ARISR_CHUNK_CTRL2 *ctrl2;           // 4 Bytes
+    ARISR_UINT48 destinationC;          // 6 Bytes
+    ARISR_CHUNK_CTRL2 ctrl2;            // 4 Bytes
     ARISR_UINT16 crc_header;            // 2 Bytes
     ARISR_UINT8 *data;                  // n Bytes
     ARISR_UINT16 crc_data[2];           // 2 Bytes

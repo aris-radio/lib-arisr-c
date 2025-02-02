@@ -53,15 +53,15 @@
 
 /* CTRL 1*/
 
-#define ARISR_CTRL_VERSION_MASK     0xF
-#define ARISR_CTRL_DESTS_MASK       0xFF
-#define ARISR_CTRL_OPTION_MASK      0x7
-#define ARISR_CTRL_FROM_MASK        0x1
-#define ARISR_CTRL_SEQUENCE_MASK    0x3F
-#define ARISR_CTRL_RETRY_MASK       0x1
-#define ARISR_CTRL_MD_MASK          0x1
-#define ARISR_CTRL_ID_MASK          0x7F
-#define ARISR_CTRL_MH_MASK          0x1 
+#define ARISR_CTRL_VERSION_MASK     0xF0000000
+#define ARISR_CTRL_DESTS_MASK       0x0FF00000
+#define ARISR_CTRL_OPTION_MASK      0x000E0000
+#define ARISR_CTRL_FROM_MASK        0x00010000
+#define ARISR_CTRL_SEQUENCE_MASK    0x0000FC00
+#define ARISR_CTRL_RETRY_MASK       0x00000200
+#define ARISR_CTRL_MD_MASK          0x00000100
+#define ARISR_CTRL_ID_MASK          0x000000FE
+#define ARISR_CTRL_MH_MASK          0x00000001
 
 #define ARISR_CTRL_VERSION_BITS    4
 #define ARISR_CTRL_DESTS_BITS      8
@@ -73,32 +73,33 @@
 #define ARISR_CTRL_ID_BITS         7
 #define ARISR_CTRL_MH_BITS         1
 
-#define ARISR_CTRL_VERSION_OFFSET    0
-#define ARISR_CTRL_DESTS_OFFSET      4
-#define ARISR_CTRL_OPTION_OFFSET     12
-#define ARISR_CTRL_FROM_OFFSET       15
-#define ARISR_CTRL_SEQUENCE_OFFSET   16
-#define ARISR_CTRL_RETRY_OFFSET      22
-#define ARISR_CTRL_MD_OFFSET         23
-#define ARISR_CTRL_ID_OFFSET         24
-#define ARISR_CTRL_MH_OFFSET         31
+#define ARISR_CTRL_VERSION_SHIFT    28
+#define ARISR_CTRL_DESTS_SHIFT      20
+#define ARISR_CTRL_OPTION_SHIFT     17
+#define ARISR_CTRL_FROM_SHIFT       16
+#define ARISR_CTRL_SEQUENCE_SHIFT   10
+#define ARISR_CTRL_RETRY_SHIFT      9
+#define ARISR_CTRL_MD_SHIFT         8
+#define ARISR_CTRL_ID_SHIFT         1
+#define ARISR_CTRL_MH_SHIFT         0
 
 /* CTRL 2*/
 
-#define ARISR_CTRL2_DATA_LENGTH_MASK    0xFF
-#define ARISR_CTRL2_FEATURE_MASK        0x1
-#define ARISR_CTRL2_NEG_ANSWER_MASK     0x1
-#define ARISR_CTRL2_FREQ_SWITCH_MASK    0x1
+#define ARISR_CTRL2_DATA_LENGTH_MASK    0xFF000000
+#define ARISR_CTRL2_FEATURE_MASK        0x00800000
+#define ARISR_CTRL2_NEG_ANSWER_MASK     0x00400000
+#define ARISR_CTRL2_FREQ_SWITCH_MASK    0x00200000
 
 #define ARISR_CTRL2_DATA_LENGTH_BITS    8
 #define ARISR_CTRL2_FEATURE_BITS        1
 #define ARISR_CTRL2_NEG_ANSWER_BITS     1
 #define ARISR_CTRL2_FREQ_SWITCH_BITS    1
+#define ARISR_CTRL2_BLANK_BITS          21
 
-#define ARISR_CTRL2_DATA_LENGTH_OFFSET    0
-#define ARISR_CTRL2_FEATURE_OFFSET        8
-#define ARISR_CTRL2_NEG_ANSWER_OFFSET     9
-#define ARISR_CTRL2_FREQ_SWITCH_OFFSET    10
+#define ARISR_CTRL2_DATA_LENGTH_SHIFT    24
+#define ARISR_CTRL2_FEATURE_SHIFT        23
+#define ARISR_CTRL2_NEG_ANSWER_SHIFT     22
+#define ARISR_CTRL2_FREQ_SWITCH_SHIFT    21
 
 #pragma pack(1)
 typedef struct {
@@ -116,11 +117,11 @@ typedef struct {
 
 #pragma pack(1)
 typedef struct {
-    ARISR_UINT32 data_length : 8;   // 8 Bits
-    ARISR_UINT32 feature : 1;       // 1 Bits
-    ARISR_UINT32 neg_answer : 1;    // 1 Bits
-    ARISR_UINT32 freq_switch : 1;   // 1 Bits
-    ARISR_UINT32 _blank: 21;        // 21 Bits (Not used, for future version or private use)
+    ARISR_UINT32 data_length  : ARISR_CTRL2_DATA_LENGTH_BITS;   // 8 Bits
+    ARISR_UINT32 feature      : ARISR_CTRL2_FEATURE_BITS;       // 1 Bits
+    ARISR_UINT32 neg_answer   : ARISR_CTRL2_NEG_ANSWER_BITS;    // 1 Bits
+    ARISR_UINT32 freq_switch  : ARISR_CTRL2_FREQ_SWITCH_BITS;   // 1 Bits
+    ARISR_UINT32 _blank       : ARISR_CTRL2_BLANK_BITS;         // 21 Bits (Not used, for future version or private use)
 } ARISR_CHUNK_CTRL2_RAW;
 #pragma pack()
 
@@ -128,14 +129,14 @@ typedef struct {
 typedef struct __attribute__((packed)) {
     ARISR_UINT8 id[4];                                  // 4 Bytes
     ARISR_UINT8 aris[4];                                // 4 Bytes
-    ARISR_CHUNK_CTRL_RAW *ctrl;                         // 4 Bytes
+    ARISR_UINT8 ctrl[4];                                // 4 Bytes
     ARISR_UINT8 origin[ARISR_ADDRESS_SIZE];             // 6 Bytes
     ARISR_UINT8 destinationA[ARISR_ADDRESS_SIZE];       // 6 Bytes
-    ARISR_UINT8 (*destinationsB)[ARISR_ADDRESS_SIZE];   // ... n*6 Bytes
-    ARISR_UINT8 destinationC[ARISR_ADDRESS_SIZE];       // 6 Bytes
-    ARISR_CHUNK_CTRL2_RAW *ctrl2;                       // 4 Bytes
+    ARISR_UINT8 (*destinationsB)[ARISR_ADDRESS_SIZE];   // ... n*6 Bytes By enabling
+    ARISR_UINT8 *destinationC;                          // 6 Bytes       By enabling
+    ARISR_UINT8 *ctrl2;                                 // 4 Bytes       By enabling
     ARISR_UINT8 crc_header[2];                          // 2 Bytes
-    ARISR_UINT8 *data;                                  // n Bytes
+    ARISR_UINT8 *data;                                  // n Bytes       By enabling
     ARISR_UINT8 crc_data[2];                            // 2 Bytes
     ARISR_UINT8 end[4];                                 // 4 Bytes
 } ARISR_CHUNK_RAW;

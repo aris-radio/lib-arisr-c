@@ -18,8 +18,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
  **********************************************************************************
- * @file lib_arisr_err.h
- * @brief This file contains error code and message definitions for the ARISr protocol.
+ * @file lib_arisr_crypt.h
+ * @brief This file contains the implementation of cryptographic functions for the ARISr protocol.
  * @date 2025-01-30
  * @authors ARIS Alliance
 */
@@ -32,6 +32,7 @@
 #include "lib_arisr_base.h"
 
 // Polinomio standard CRC-16-CCITT (X^16 + X^12 + X^5 + 1) = 0x1021
+// CRC-16-CCITT-FALSE or CRC-16/IBM-CCITT or CRC-16/AUTOSAR or CRC-16/IBM-3740
 #define CRC16_POLYNOMIAL 0x1021
 #define CRC16_INITIAL_VALUE 0xFFFF  // Initial value for CRC16 calculation
 
@@ -90,6 +91,14 @@ typedef
 #pragma pack()
 
 /**
+ * @brief Static function to check if the AES key is zero.
+ * 
+ * @param key The AES key to check.
+ * @return 0 if the key is zero, 1 otherwise.
+ */
+#define ARISR_AES_IS_ZERO_KEY(key) (memcmp((key), (const ARISR_UINT8[16]){0}, 16) == 0)
+
+/**
  * @brief Performs a cyclic subtraction (mod 256) on the 4-byte 'aris' array using the last byte of a 16-byte AES key.
  *
  * This function retrieves the last byte from the 16-byte AES key (index 15),
@@ -103,7 +112,7 @@ typedef
  * @return kARISR_OK if 'aris' becomes "ARIS" after the subtraction,
  *         otherwise kARISR_ERR_GENERIC.
  */
-ARISR_ERR ARISR_aes_aris_decrypt(const ARISR_AES128_KEY *key, const ARISR_UINT8 *aris);
+ARISR_ERR ARISR_aes_aris_decrypt(const ARISR_AES128_KEY key, const ARISR_UINT8 *aris);
 
 /**
  * @brief Encrypts the 4-byte 'aris' array by adding the last byte of a 128-bit (16-byte) AES key.
@@ -120,8 +129,49 @@ ARISR_ERR ARISR_aes_aris_decrypt(const ARISR_AES128_KEY *key, const ARISR_UINT8 
  * @return kARISR_OK if the encryption process succeeds,
  *         otherwise kARISR_ERR_GENERIC if inputs are null.
  */
-ARISR_ERR ARISR_aes_aris_encrypt(const ARISR_AES128_KEY *key, ARISR_UINT8 *aris);
+ARISR_ERR ARISR_aes_aris_encrypt(const ARISR_AES128_KEY key, ARISR_UINT8 *aris);
 
+/**
+ * @brief Encrypt data using AES-128 in ECB mode with PKCS#7 padding.
+ *
+ * This function encrypts the input data of arbitrary length by applying PKCS#7 padding so that
+ * its length becomes a multiple of AES_BLOCKLEN (typically 16 bytes), and then encrypts it using AES-128 ECB mode.
+ *
+ * @param key         The AES-128 encryption key.
+ * @param input       Pointer to the input data to be encrypted.
+ * @param input_len   Length of the input data in bytes.
+ * @param output      Pointer to the pointer where the encrypted (and padded) data will be stored (dynamically allocated).
+ * @param output_len  Pointer to the variable where the length of the encrypted data will be stored.
+ * @return int        Returns kARISR_OK on success, or an error code (e.g., kARISR_ERR_INVALID_ARGUMENT, kARISR_ERR_MEMORY).
+ *
+ * @note The caller is responsible for freeing the memory allocated for *output.
+ */
+ARISR_ERR ARISR_aes_data_encrypt(const ARISR_AES128_KEY key,
+                                 const ARISR_UINT8 *input,
+                                 ARISR_UINT32 input_len,
+                                 ARISR_UINT8 **output,
+                                 ARISR_UINT32 *output_len);
+
+/**
+ * @brief Decrypt data encrypted using AES-128 in ECB mode with PKCS#7 padding.
+ *
+ * This function decrypts the input encrypted data and removes the PKCS#7 padding.
+ * It returns the decrypted data and its original length (without padding).
+ *
+ * @param key         The AES-128 decryption key.
+ * @param input       Pointer to the input encrypted data.
+ * @param input_len   Length of the input encrypted data in bytes (must be a multiple of AES_BLOCKLEN).
+ * @param output      Pointer to the pointer where the decrypted data will be stored (dynamically allocated).
+ * @param output_len  Pointer to the variable where the length of the decrypted data (excluding padding) will be stored.
+ * @return int        Returns kARISR_OK on success, or an error code (e.g., kARISR_ERR_INVALID_ARGUMENT, kARISR_ERR_MEMORY, kARISR_ERR_INVALID_PADDING).
+ *
+ * @note The caller is responsible for freeing the memory allocated for *output.
+ */
+ARISR_ERR ARISR_aes_data_decrypt(const ARISR_AES128_KEY key,
+                                 const ARISR_UINT8 *input,
+                                 ARISR_UINT32 input_len,
+                                 ARISR_UINT8 **output,
+                                 ARISR_UINT32 *output_len);
 #endif
 
 /* COPYRIGHT ARIS Alliance */

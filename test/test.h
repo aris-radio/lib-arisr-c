@@ -1,0 +1,113 @@
+/**
+ * @attention
+
+    Copyright (C) 2025  - ARIS Alliance
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+ **********************************************************************************
+*/
+
+#ifndef MAIN_TEST_H
+#define MAIN_TEST_H
+
+#include "lib_arisr_base.h"
+
+#define ARISR_ID   \
+{ 0x00, 0x11, 0x22, 0x33 }
+
+#define ARISR_MSG_KEY       \
+{ 0x00, 0x11, 0x22, 0x33,   \
+  0x44, 0x55, 0x66, 0x77,   \
+  0x88, 0x99, 0xAA, 0xBB,   \
+  0xCC, 0xDD, 0xEE, 0xFF    \
+}
+
+#define ARISR_MSG_KEY_BLANK \
+{ 0x00, 0x00, 0x00, 0x00,   \
+  0x00, 0x00, 0x00, 0x00,   \
+  0x00, 0x00, 0x00, 0x00,   \
+  0x00, 0x00, 0x00, 0x00    \
+}
+
+
+/**
+ *  ID = 0x00 0x11 0x22 0x33
+ *  CTRL1 = {
+ *      version: 1,
+ *      destinations: 0,
+ *      option: 0,
+ *      from: 0,
+ *      sequence: 1,
+ *      retry: 0,
+ *      more_data: 1,
+ *      identifier: 110,
+ *      more_header: 0
+ *  }
+ */
+static const ARISR_UINT8 ARISR_MSG_RAW_1[] =
+{
+    0x00, 0x11, 0x22, 0x33,
+    0x40, 0x51, 0x48, 0x52,
+    0x10, 0x00, 0x05, 0xDC,
+    0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E,
+    0xFA, 0x16, 0x3E, 0x2F, 0xEC, 0xA8,
+    0x5C, 0x18,
+    0x00, 0x11, 0x22, 0x33,
+};
+
+/**
+ *  ID = 0x00 0x11 0x22 0x33
+ *  CTRL1 = {
+ *      version: 1,
+ *      destinations: 0,
+ *      option: 0,
+ *      from: 0,
+ *      sequence: 1,
+ *      retry: 0,
+ *      more_data: 1,
+ *      identifier: 110,
+ *      more_header: 0
+ *  }
+ * 
+ * CTRL2 = {
+ *      data_length: 1,
+ *      feature: 0,
+ *      neg_answer: 0,
+ *      freq_switch: 0
+ * }
+ * 
+ * DATA = 0x00, 0x11, 0x22, 0x33, 0x00, 0x11, 0x22, 0x33
+ */
+static const ARISR_UINT8 ARISR_MSG_RAW_2[] =
+{
+    0x00, 0x11, 0x22, 0x33,
+    0x40, 0x51, 0x48, 0x52,
+    0x10, 0x00, 0x05, 0xDD,
+    0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E,
+    0xFA, 0x16, 0x3E, 0x2F, 0xEC, 0xA8,
+    0x02, 0x00, 0x00, 0x00,
+    0x2D, 0x41,
+    0xB2, 0x5F, 0x8D, 0x1A, 0x74, 0xC0,
+    0xBE, 0xE3, 0xD1, 0x8A, 0x4B, 0x7C, 
+    0x2F, 0x5D, 0x9E, 0x0C,
+    0x9C, 0xFE,
+    0x00, 0x11, 0x22, 0x33,
+};
+
+
+#endif
+
+/* COPYRIGHT ARIS Alliance */
