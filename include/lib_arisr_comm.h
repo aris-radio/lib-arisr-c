@@ -80,25 +80,25 @@ typedef struct {
 } ARISR_CHUNK_CTRL;
 
 typedef struct {
-    ARISR_UINT8 data_length;
+    ARISR_UINT32 data_length;
     ARISR_UINT8 feature;
     ARISR_UINT8 neg_answer;
     ARISR_UINT8 freq_switch;
 } ARISR_CHUNK_CTRL2;
 
 typedef struct {
-    ARISR_UINT32 id;                    // 4 Bytes
-    ARISR_UINT32 aris;                  // 4 Bytes
+    ARISR_UINT8 id[4];                  // 4 Bytes
+    ARISR_UINT8 aris[4];                // 4 Bytes
     ARISR_CHUNK_CTRL ctrl;              // 4 Bytes
     ARISR_UINT48 origin;                // 6 Bytes
     ARISR_UINT48 destinationA;          // 6 Bytes
     ARISR_UINT48 *destinationsB;        // ... n*6 Bytes
     ARISR_UINT48 destinationC;          // 6 Bytes
     ARISR_CHUNK_CTRL2 ctrl2;            // 4 Bytes
-    ARISR_UINT16 crc_header;            // 2 Bytes
+    ARISR_UINT8 crc_header[2];          // 2 Bytes
     ARISR_UINT8 *data;                  // n Bytes
-    ARISR_UINT16 crc_data[2];           // 2 Bytes
-    ARISR_UINT32 end;                   // 4 Bytes
+    ARISR_UINT8 crc_data[2];            // 2 Bytes
+    ARISR_UINT8 end[2];                 // 4 Bytes
 } ARISR_CHUNK;
 
 

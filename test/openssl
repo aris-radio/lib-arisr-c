@@ -1,0 +1,2 @@
+echo "$MESSAGE_HEX" | xxd -r -p | openssl aes-128-ecb -e -K $KEY_HEX | xxd -p
+echo "$CRYPT_HEX" | xxd -r -p | openssl aes-128-ecb -d -K $KEY_HEX | xxd -p

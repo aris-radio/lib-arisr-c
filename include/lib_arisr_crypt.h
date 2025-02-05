@@ -90,13 +90,14 @@ typedef
     ARISR_UINT8 ARISR_AES128_KEY[ARISR_AES128_BLOCK_SIZE];
 #pragma pack()
 
+
 /**
  * @brief Static function to check if the AES key is zero.
  * 
  * @param key The AES key to check.
  * @return 0 if the key is zero, 1 otherwise.
  */
-#define ARISR_AES_IS_ZERO_KEY(key) (memcmp((key), (const ARISR_UINT8[16]){0}, 16) == 0)
+#define ARISR_AES_IS_ZERO_KEY(key) (key == NULL)
 
 /**
  * @brief Performs a cyclic subtraction (mod 256) on the 4-byte 'aris' array using the last byte of a 16-byte AES key.
@@ -132,18 +133,21 @@ ARISR_ERR ARISR_aes_aris_decrypt(const ARISR_AES128_KEY key, const ARISR_UINT8 *
 ARISR_ERR ARISR_aes_aris_encrypt(const ARISR_AES128_KEY key, ARISR_UINT8 *aris);
 
 /**
- * @brief Encrypt data using AES-128 in ECB mode with PKCS#7 padding.
- *
+ * @brief AES-128 Encryption with PKCS#7 Padding
+ * 
  * This function encrypts the input data of arbitrary length by applying PKCS#7 padding so that
  * its length becomes a multiple of AES_BLOCKLEN (typically 16 bytes), and then encrypts it using AES-128 ECB mode.
- *
- * @param key         The AES-128 encryption key.
- * @param input       Pointer to the input data to be encrypted.
- * @param input_len   Length of the input data in bytes.
- * @param output      Pointer to the pointer where the encrypted (and padded) data will be stored (dynamically allocated).
- * @param output_len  Pointer to the variable where the length of the encrypted data will be stored.
- * @return int        Returns kARISR_OK on success, or an error code (e.g., kARISR_ERR_INVALID_ARGUMENT, kARISR_ERR_MEMORY).
- *
+ * 
+ * @param key[in]         128-bit encryption key
+ * @param input[in]       Plaintext data to encrypt
+ * @param input_len[in]   Length of plaintext data (1 <= len <= MAX_INPUT_LEN)
+ * @param output[out]     Encrypted data buffer (caller must free)
+ * @param output_len[out] Length of encrypted data
+ * 
+ * @retval kARISR_OK               Encryption successful
+ * @retval kARISR_ERR_INVALID_ARG  Invalid input parameters
+ * @retval kARISR_ERR_GENERIC      Memory allocation failure
+ * 
  * @note The caller is responsible for freeing the memory allocated for *output.
  */
 ARISR_ERR ARISR_aes_data_encrypt(const ARISR_AES128_KEY key,
@@ -153,18 +157,22 @@ ARISR_ERR ARISR_aes_data_encrypt(const ARISR_AES128_KEY key,
                                  ARISR_UINT32 *output_len);
 
 /**
- * @brief Decrypt data encrypted using AES-128 in ECB mode with PKCS#7 padding.
- *
+ * @brief AES-128 Decryption with PKCS#7 Padding Validation
+ * 
  * This function decrypts the input encrypted data and removes the PKCS#7 padding.
  * It returns the decrypted data and its original length (without padding).
- *
- * @param key         The AES-128 decryption key.
- * @param input       Pointer to the input encrypted data.
- * @param input_len   Length of the input encrypted data in bytes (must be a multiple of AES_BLOCKLEN).
- * @param output      Pointer to the pointer where the decrypted data will be stored (dynamically allocated).
- * @param output_len  Pointer to the variable where the length of the decrypted data (excluding padding) will be stored.
- * @return int        Returns kARISR_OK on success, or an error code (e.g., kARISR_ERR_INVALID_ARGUMENT, kARISR_ERR_MEMORY, kARISR_ERR_INVALID_PADDING).
- *
+ * 
+ * @param key[in]         128-bit decryption key (same as encryption key)
+ * @param input[in]       Ciphertext data to decrypt
+ * @param input_len[in]   Length of ciphertext data (must be block-aligned)
+ * @param output[out]     Decrypted data buffer (caller must free)
+ * @param output_len[out] Length of decrypted data (excluding padding)
+ * 
+ * @retval kARISR_OK               Decryption successful
+ * @retval kARISR_ERR_INVALID_ARG  Invalid parameters
+ * @retval kARISR_ERR_BAD_PADDING  Invalid PKCS#7 padding
+ * @retval kARISR_ERR_GENERIC      Memory allocation failure
+ * 
  * @note The caller is responsible for freeing the memory allocated for *output.
  */
 ARISR_ERR ARISR_aes_data_decrypt(const ARISR_AES128_KEY key,

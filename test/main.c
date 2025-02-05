@@ -30,107 +30,135 @@
 #include <stdlib.h> // For malloc, free
 
 #include "lib_arisr.h"
+#include "log.h"
 #include "test.h"
 
 
-void printBuffer(ARISR_CHUNK_RAW *buffer)
+
+/**
+ * @brief Prints the raw contents of an ARISR_CHUNK_RAW buffer.
+ *
+ * This function outputs the contents of the ARISR_CHUNK_RAW structure 
+ * in a readable format for debugging purposes. It prints the raw 
+ * binary data, including IDs, control fields, addresses, and payload data.
+ *
+ * @param buffer Pointer to the ARISR_CHUNK_RAW structure to be printed.
+ */
+void printBufferRaw(ARISR_CHUNK_RAW *buffer);
+
+/**
+ * @brief Prints the parsed contents of an ARISR_CHUNK buffer.
+ *
+ * This function outputs the structured and decoded contents of an 
+ * ARISR_CHUNK structure. It prints the extracted and decrypted data, 
+ * including metadata, control fields, addresses, and payload information.
+ *
+ * @param buffer Pointer to the ARISR_CHUNK structure to be printed.
+ */
+void printBuffer(ARISR_CHUNK *buffer);
+
+
+
+void printBufferRaw(ARISR_CHUNK_RAW *buffer)
 {
-    int i, j, destinations, from_relay, more_headers, data_length;
+    int j, destinations, from_relay, more_headers, data_length = 0;
 
     destinations = ARISR_proto_ctrl_getField(buffer->ctrl, ARISR_CTRL_DESTS_MASK, ARISR_CTRL_DESTS_SHIFT);
     from_relay   = ARISR_proto_ctrl_getField(buffer->ctrl, ARISR_CTRL_FROM_MASK, ARISR_CTRL_FROM_SHIFT);
     more_headers = ARISR_proto_ctrl_getField(buffer->ctrl, ARISR_CTRL_MH_MASK, ARISR_CTRL_MH_SHIFT);
 
-    printf("ID: ");
-    for (i = 0; i < ARISR_PROTO_ID_SIZE; i++) {
-        printf("%02X ", buffer->id[i]);
-    }
-    printf("\n");
+    LOG_INFO("[ID]          %02X %02X %02X %02X", buffer->id[0], buffer->id[1], buffer->id[2], buffer->id[3]);
+    LOG_INFO("[ARIS]        %02X %02X %02X %02X", buffer->aris[0], buffer->aris[1], buffer->aris[2], buffer->aris[3]);
+    LOG_INFO("[CTRL]        %02X %02X %02X %02X", buffer->ctrl[0], buffer->ctrl[1], buffer->ctrl[2], buffer->ctrl[3]);
+    LOG_INFO("[ORIGIN]      %02X %02X %02X %02X %02X %02X", buffer->origin[0], buffer->origin[1], buffer->origin[2], buffer->origin[3], buffer->origin[4], buffer->origin[5]);
+    LOG_INFO("[DEST A]      %02X %02X %02X %02X %02X %02X", buffer->destinationA[0], buffer->destinationA[1], buffer->destinationA[2], buffer->destinationA[3], buffer->destinationA[4], buffer->destinationA[5]);
 
-    printf("ARIS: ");
-    for (i = 0; i < ARISR_PROTO_ARIS_SIZE; i++) {
-        printf("%02X ", buffer->aris[i]);
-    }
-    printf("\n");
-
-    printf("CTRL: ");
-    // See every field in the control section
-    for (i = 0; i < ARISR_PROTO_ARIS_SIZE; i++) {
-        printf("%02X ", buffer->ctrl[i]);
-    }
-    printf("\n");
-
-    printf("ORIGIN: ");
-    for (i = 0; i < ARISR_ADDRESS_SIZE; i++) {
-        printf("%02X ", buffer->origin[i]);
-    }
-    printf("\n");
-
-    printf("DESTINATION A: ");
-    for (i = 0; i < ARISR_ADDRESS_SIZE; i++) {
-        printf("%02X ", buffer->destinationA[i]);
-    }
-    printf("\n");
-
-    printf("DESTINATION B: ");
     // Every destination in the array if exists
-    if (buffer->destinationsB) {
+    if (destinations > 0 && buffer->destinationsB) {
+        LOG_INFO("[DEST B] ");
         for (j = 0; j < destinations; j++) {
-            for (i = 0; i < ARISR_ADDRESS_SIZE; i++) {
-                printf("    %d: %02X ", i, buffer->destinationsB[j][i]);
-            }
-            printf("\n");
+            LOG_INFO("  [%03d]          %02X %02X %02X %02X %02X %02X", j, buffer->destinationsB[j][0], buffer->destinationsB[j][1], buffer->destinationsB[j][2], buffer->destinationsB[j][3], buffer->destinationsB[j][4], buffer->destinationsB[j][5]);
         }
     }
-    printf("\n");
 
-    printf("DESTINATION C: ");
     // If from_relay is set, print the destinationC
     if (from_relay) {
-        for (i = 0; i < ARISR_ADDRESS_SIZE; i++) {
-            printf("%02X ", buffer->destinationC[i]);
-        }
+        LOG_INFO("[DEST C]      %02X %02X %02X %02X %02X %02X", buffer->destinationC[0], buffer->destinationC[1], buffer->destinationC[2], buffer->destinationC[3], buffer->destinationC[4], buffer->destinationC[5]);
     }
-    printf("\n");
 
-    printf("CTRL2: ");
     // If more_headers is set, print the control section 2 every field
     if (more_headers) {
+        LOG_INFO("[CTRL2]       %02X %02X %02X %02X", buffer->ctrl2[0], buffer->ctrl2[1], buffer->ctrl2[2], buffer->ctrl2[3]);
         data_length  = ARISR_proto_ctrl_getField(buffer->ctrl2, ARISR_CTRL2_DATA_LENGTH_MASK, ARISR_CTRL2_DATA_LENGTH_SHIFT);
 
         // The real data length is 'data_length' as n * 8 Bytes
         data_length *= 8;
+    }
 
-        printf("Data length: %d\n", data_length);
-        for (i = 0; i < ARISR_CTRL2_SECTION_SIZE; i++) {
-            printf("%02X ", buffer->ctrl2[i]);
+    LOG_INFO("[CRC H]       %02X %02X", buffer->crc_header[0], buffer->crc_header[1]);
+    LOG_INFO("[CRC D]       %02X %02X", buffer->crc_data[0], buffer->crc_data[1]);
+
+    LOG_INFO("[END]         %02X %02X %02X %02X", buffer->end[0], buffer->end[1], buffer->end[2], buffer->end[3]);
+
+    if (data_length > 0) {
+        LOG_INFO("");
+        LOG_INFO("[DATA] ");
+        hex_dump(buffer->data, data_length);
+    }
+}
+
+void printBuffer(ARISR_CHUNK *buffer)
+{
+    int j;
+
+    LOG_INFO("[ID]          %02X %02X %02X %02X", buffer->id[0], buffer->id[1], buffer->id[2], buffer->id[3]);
+    LOG_INFO("[ARIS]        %02X %02X %02X %02X", buffer->aris[0], buffer->aris[1], buffer->aris[2], buffer->aris[3]);
+    LOG_INFO("[CTRL]");
+    LOG_INFO("  [VER]          %d", buffer->ctrl.version);
+    LOG_INFO("  [DEST]         %d", buffer->ctrl.destinations);
+    LOG_INFO("  [OPT]          %d", buffer->ctrl.option);
+    LOG_INFO("  [FROM]         %d", buffer->ctrl.from);
+    LOG_INFO("  [SEQ]          %d", buffer->ctrl.sequence);
+    LOG_INFO("  [RET]          %d", buffer->ctrl.retry);
+    LOG_INFO("  [MD]           %d", buffer->ctrl.more_data);
+    LOG_INFO("  [ID]           %d", buffer->ctrl.identifier);
+    LOG_INFO("  [MH]           %d", buffer->ctrl.more_header);
+
+    LOG_INFO("[ORIGIN]      %02X %02X %02X %02X %02X %02X", buffer->origin[0], buffer->origin[1], buffer->origin[2], buffer->origin[3], buffer->origin[4], buffer->origin[5]);
+    LOG_INFO("[DEST A]      %02X %02X %02X %02X %02X %02X", buffer->destinationA[0], buffer->destinationA[1], buffer->destinationA[2], buffer->destinationA[3], buffer->destinationA[4], buffer->destinationA[5]);
+
+    // Every destination in the array if exists
+    if (buffer->ctrl.destinations > 0 && buffer->destinationsB) {
+        LOG_INFO("[DEST B] ");
+        for (j = 0; j < buffer->ctrl.destinations; j++) {
+            LOG_INFO("  [%03d]          %02X %02X %02X %02X %02X %02X", j, buffer->destinationsB[j][0], buffer->destinationsB[j][1], buffer->destinationsB[j][2], buffer->destinationsB[j][3], buffer->destinationsB[j][4], buffer->destinationsB[j][5]);
         }
-
-        printf("DATA: ");
-        for (i = 0; i < data_length; i++) {
-            printf("%02X ", buffer->data[i]);
-        }
-        printf("\n");
     }
-    printf("\n");
 
-    printf("CRC HEADER: ");
-    for (i = 0; i < ARISR_CRC_SIZE; i++) {
-        printf("%02X ", buffer->crc_header[i]);
+    // If from_relay is set, print the destinationC
+    if (buffer->ctrl.from) {
+        LOG_INFO("[DEST C]      %02X %02X %02X %02X %02X %02X", buffer->destinationC[0], buffer->destinationC[1], buffer->destinationC[2], buffer->destinationC[3], buffer->destinationC[4], buffer->destinationC[5]);
     }
-    printf("\n");
 
-    printf("CRC DATA: ");
-    for (i = 0; i < ARISR_CRC_SIZE; i++) {
-        printf("%02X ", buffer->crc_data[i]);
+    // If more_headers is set, print the control section 2 every field
+    if (buffer->ctrl.more_header) {
+        LOG_INFO("[CTRL2]");
+        LOG_INFO("  [DL]           %d", buffer->ctrl2.data_length);
+        LOG_INFO("  [FEAT]         %d", buffer->ctrl2.feature);
+        LOG_INFO("  [NEG]          %d", buffer->ctrl2.neg_answer);
+        LOG_INFO("  [FREQ]         %d", buffer->ctrl2.freq_switch);
     }
-    printf("\n");
 
-    printf("END: ");
-    for (i = 0; i < ARISR_PROTO_ID_SIZE; i++) {
-        printf("%02X ", buffer->end[i]);
+    LOG_INFO("[CRC H]       %02X %02X", buffer->crc_header[0], buffer->crc_header[1]);
+    LOG_INFO("[CRC D]       %02X %02X", buffer->crc_data[0], buffer->crc_data[1]);
+
+    LOG_INFO("[END]         %02X %02X %02X %02X", buffer->end[0], buffer->end[1], buffer->end[2], buffer->end[3]);
+
+    if (buffer->ctrl2.data_length > 0) {
+        LOG_INFO("");
+        LOG_INFO("[DATA] ");
+        hex_dump(buffer->data, buffer->ctrl2.data_length);
     }
-    printf("\n");
 }
 
 // =================================================================================================
@@ -140,41 +168,192 @@ int main(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
+    ARISR_UINT16 i;
     ARISR_ERR err;
 
     // Key
     ARISR_AES128_KEY key = ARISR_MSG_KEY;
+    ARISR_UINT8 id[] = ARISR_ID;
 
     // =====================================
 
-    // Test 1 - Receive and parse raw data case 1
-    ARISR_CHUNK_RAW buffer;
+    LOG_INFO("--------------  TEST UNIT  ----------------");
+    LOG_INFO("------   Start unpacking raw data   -------");
+    LOG_INFO("-------------------------------------------");
+    // 16 bytes key
+    LOG_INFO("  > Using key:");
+    hex_dump(key, ARISR_AES128_BLOCK_SIZE);
+    LOG_INFO("-------------------------------------------");
 
-    if ((err = ARISR_proto_recv(&buffer, ARISR_MSG_RAW_1, key)) != kARISR_OK) {
-        printf("Test 1 failed with error = %d\n", err);
+
+    // ========== TEST RECV AND UNPACK ==============
+    ARISR_CHUNK_RAW buffer;
+    ARISR_CHUNK interface;
+
+    for (i = 1; i <= sizeof(ARISR_RAW_TEST) / sizeof(ARISR_RAW_TEST[0]); i++) {
+        LOG_INFO("  > Test %zu:", i);
+        // Test x - Receive and parse raw data case 1
+        // DUMP
+        hex_dump(ARISR_RAW_TEST[i-1].msg, ARISR_RAW_TEST[i-1].length);
+
+        if ((err = ARISR_proto_recv(&buffer, ARISR_RAW_TEST[i-1].msg, key, id)) != ARISR_RAW_TEST[i-1].expected_recv) {
+            LOG_ERROR("TEST %zu FAILED WITH ERROR = %d AND EXPECTED = %d", i, err, ARISR_RAW_TEST[i-1].expected_recv);
+            return err;
+        }
+
+        LOG_INFO("-");
+        LOG_INFO("[TEST %zu PASSED] Output = %d", i, err);
+        LOG_INFO("-");
+        printBufferRaw(&buffer);
+
+        if (err == kARISR_OK) {
+            //
+            LOG_INFO("-------------------------------------------");
+            LOG_INFO("  > Interface of Test %zu:", i);
+            // Unpack the raw data into a structured ARISR_CHUNK
+            if ((err = ARISR_proto_unpack(&interface, &buffer, key)) != ARISR_RAW_TEST[i-1].expected_unpack) {
+                LOG_ERROR("TEST %zu FAILED UNPACKING WITH ERROR = %d", i, err);
+                return err;
+            }
+
+            // Clean up the raw buffer
+            ARISR_proto_raw_chunk_clean(&buffer);
+
+            if (err == kARISR_OK) {
+                // Check if version match
+                if (interface.ctrl.version != ARISR_RAW_TEST[i-1].version) {
+                    LOG_ERROR("TEST %zu FAILED VERSION MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.version, ARISR_RAW_TEST[i-1].version);
+                    return -1;
+                }
+
+                // Check if destinations match
+                if (interface.ctrl.destinations != ARISR_RAW_TEST[i-1].destinations) {
+                    LOG_ERROR("TEST %zu FAILED DESTINATIONS MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.destinations, ARISR_RAW_TEST[i-1].destinations);
+                    return -1;
+                }
+
+                // Check if option match
+                if (interface.ctrl.option != ARISR_RAW_TEST[i-1].option) {
+                    LOG_ERROR("TEST %zu FAILED OPTION MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.option, ARISR_RAW_TEST[i-1].option);
+                    return -1;
+                }
+
+                // Check if from match
+                if (interface.ctrl.from != ARISR_RAW_TEST[i-1].from) {
+                    LOG_ERROR("TEST %zu FAILED FROM MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.from, ARISR_RAW_TEST[i-1].from);
+                    return -1;
+                }
+
+                // Check if sequence match
+                if (interface.ctrl.sequence != ARISR_RAW_TEST[i-1].sequence) {
+                    LOG_ERROR("TEST %zu FAILED SEQUENCE MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.sequence, ARISR_RAW_TEST[i-1].sequence);
+                    return -1;
+                }
+
+                // Check if retry match
+                if (interface.ctrl.retry != ARISR_RAW_TEST[i-1].retry) {
+                    LOG_ERROR("TEST %zu FAILED RETRY MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.retry, ARISR_RAW_TEST[i-1].retry);
+                    return -1;
+                }
+
+                // Check if more_data match
+                if (interface.ctrl.more_data != ARISR_RAW_TEST[i-1].more_data) {
+                    LOG_ERROR("TEST %zu FAILED MORE DATA MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.more_data, ARISR_RAW_TEST[i-1].more_data);
+                    return -1;
+                }
+
+                // Check if identifier match
+                if (interface.ctrl.identifier != ARISR_RAW_TEST[i-1].identifier) {
+                    LOG_ERROR("TEST %zu FAILED IDENTIFIER MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.identifier, ARISR_RAW_TEST[i-1].identifier);
+                    return -1;
+                }
+
+                // Check if more_header match
+                if (interface.ctrl.more_header != ARISR_RAW_TEST[i-1].more_header) {
+                    LOG_ERROR("TEST %zu FAILED MORE HEADER MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.more_header, ARISR_RAW_TEST[i-1].more_header);
+                    return -1;
+                }
+
+                // Check if data_length match
+                if (interface.ctrl2.data_length != ARISR_RAW_TEST[i-1].data_length) {
+                    LOG_ERROR("TEST %zu FAILED DATA LENGTH MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl2.data_length, ARISR_RAW_TEST[i-1].data_length);
+                    return -1;
+                }
+
+                // Check if feature match
+                if (interface.ctrl2.feature != ARISR_RAW_TEST[i-1].feature) {
+                    LOG_ERROR("TEST %zu FAILED FEATURE MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl2.feature, ARISR_RAW_TEST[i-1].feature);
+                    return -1;
+                }
+
+                // Check if neg_answer match
+                if (interface.ctrl2.neg_answer != ARISR_RAW_TEST[i-1].neg_answer) {
+                    LOG_ERROR("TEST %zu FAILED NEG ANSWER MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl2.neg_answer, ARISR_RAW_TEST[i-1].neg_answer);
+                    return -1;
+                }
+
+                // Check if freq_switch match
+                if (interface.ctrl2.freq_switch != ARISR_RAW_TEST[i-1].freq_switch) {
+                    LOG_ERROR("TEST %zu FAILED FREQ SWITCH MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl2.freq_switch, ARISR_RAW_TEST[i-1].freq_switch);
+                    return -1;
+                }
+
+                // Check if data match
+                if (memcmp(interface.data, ARISR_RAW_TEST[i-1].data_plain, interface.ctrl2.data_length) != 0) {
+                    LOG_ERROR("TEST %zu FAILED DATA MISMATCH", i);
+                    return -1;
+                }
+            }
+
+            LOG_INFO("-");
+            LOG_INFO("[TEST %zu PASSED] Unpacking = %d", i, err);
+            LOG_INFO("-");
+
+            if (err == kARISR_OK) {
+                // Print the interface buffer
+                printBuffer(&interface);
+            } else {
+                LOG_INFO("TEST PASSED, BUT CONTENT CANNOT BE PARSED due to ERR = %d", err);
+            }
+        }
+
+        // Clean up the buffer
+        ARISR_proto_chunk_clean(&interface);
+        LOG_INFO("-------------------------------------------");
+        LOG_INFO("");
+        LOG_INFO("-------------------------------------------");
+
+    }
+
+    LOG_INFO("--------------  TEST UNIT  ----------------");
+    LOG_INFO("------   Testing with null key    ---------");
+    LOG_INFO("-------------------------------------------");
+
+    // Test with null key
+    LOG_INFO("  > Test with null key:");
+    hex_dump(ARISR_MSG_RAW_13, sizeof(ARISR_MSG_RAW_13));
+    if ((err = ARISR_proto_recv(&buffer, ARISR_MSG_RAW_13, NULL, id)) != kARISR_OK) {
+        LOG_ERROR("TEST FAILED WITH ERROR = %d AND EXPECTED = %d", err, kARISR_OK);
         return err;
     }
 
-    // Print the buffer contents
-    printf("Test 1 passed\n");
-    // printBuffer(&buffer);
+    LOG_INFO("-");
+    LOG_INFO("[TEST PASSED] Output = %d", err);
+    LOG_INFO("-");
+    printBufferRaw(&buffer);
+
+    // Unpacking
+    if ((err = ARISR_proto_unpack(&interface, &buffer, NULL)) != kARISR_OK) {
+        LOG_ERROR("TEST FAILED UNPACKING WITH ERROR = %d", err);
+        return err;
+    }
+    printBuffer(&interface);
 
     // Clean up the buffer
     ARISR_proto_raw_chunk_clean(&buffer);
-
-    // =====================================
-
-    // Test 2 - Receive and parse raw data case 2
-
-    if ((err = ARISR_proto_recv(&buffer, ARISR_MSG_RAW_2, key)) != kARISR_OK) {
-        printf("Test 2 failed with error = %d\n", err);
-        return err;
-    }
-
-    // Print the buffer contents
-    printf("Test 2 passed\n");
-    // printBuffer(&buffer);
-
+    ARISR_proto_chunk_clean(&interface);
 
     return 0;
 }
+
+// COPYRIGHT 2025 - ARIS Alliance

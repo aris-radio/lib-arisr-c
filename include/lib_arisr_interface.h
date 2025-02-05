@@ -38,6 +38,7 @@
     Protocol interface: ../docs/ARISRadioProtocol.pdf
 */
 
+#define ARISR_DATA_MULT             8
 #define ARISR_PROTO_ARIS_TEXT       "ARIS"
 #define ARISR_PROTO_ARIS_SIZE       4
 
