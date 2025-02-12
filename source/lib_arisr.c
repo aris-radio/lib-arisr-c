@@ -330,9 +330,18 @@ ARISR_ERR ARISR_proto_build(ARISR_UINT8 **buffer, ARISR_UINT32 *length, ARISR_CH
     if (data->ctrl.more_header) {
         size += ARISR_CTRL2_SECTION_SIZE;
 
+        /* =============== DATA ================= */// -----> Calculate first the apply to ctrl2
         // Calculate the data length
         if (data->ctrl2.data_length > 0) {
-            size += data->ctrl2.data_length + ARISR_CRC_SIZE;
+            // Encrypt the data section using AES key
+            if ((err = ARISR_aes_data_encrypt(
+                (!ARISR_AES_IS_ZERO_KEY(key)) ? key : ARISR_DEFAULT_NULL_KEY
+                , data->data, data->ctrl2.data_length, &encrypted_data, &encrypted_length)) != kARISR_OK) {
+
+                return err;
+            }
+
+            size += encrypted_length + ARISR_CRC_SIZE;
         }
     }
 
@@ -396,16 +405,6 @@ ARISR_ERR ARISR_proto_build(ARISR_UINT8 **buffer, ARISR_UINT32 *length, ARISR_CH
 
     /* =============== CTRL 2 ================= */
     if (data->ctrl.more_header) {
-        /* =============== DATA ================= */// -----> Calculate first the apply to ctrl2
-        if (data->ctrl2.data_length > 0) {
-            // Encrypt the data section using AES key
-            if ((err = ARISR_aes_data_encrypt(
-                (!ARISR_AES_IS_ZERO_KEY(key)) ? key : ARISR_DEFAULT_NULL_KEY
-                , data->data, data->ctrl2.data_length, &encrypted_data, &encrypted_length)) != kARISR_OK) {
-
-                return err;
-            }
-        }
         // Write the data length
         memset(ctrl, '\0', ARISR_CTRL2_SECTION_SIZE);
         ARISR_proto_ctrl_setField(ctrl, encrypted_length / ARISR_DATA_MULT, ARISR_CTRL2_DATA_LENGTH_SHIFT);

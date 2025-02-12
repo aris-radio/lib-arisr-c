@@ -1,2 +1,6 @@
+LibraryName=libprotoarisr.so
 Protocol=v1
 Library=v1.0.0
+Major=1
+Minor=0
+Patch=0

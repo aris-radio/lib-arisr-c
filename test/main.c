@@ -518,13 +518,6 @@ int main(int argc, char *argv[])
             return err;
         }
 
-        fprintf(stdout, "RAW LENGTH = %d\n", raw_length);
-        fprintf(stdout, "RAW = ");
-        hex_dump(raw, raw_length);
-
-        fprintf(stdout, "EXPECTED LENGTH = %d\n", ARISR_RAW_TEST_PACK[i-1].expected_length);
-        fprintf(stdout, "EXPECTED RAW = ");
-        hex_dump(ARISR_RAW_TEST_PACK[i-1].expected_raw, ARISR_RAW_TEST_PACK[i-1].expected_length);
         // Check if the raw data matches the expected
         if (raw_length != ARISR_RAW_TEST_PACK[i-1].expected_length || memcmp(raw, ARISR_RAW_TEST_PACK[i-1].expected_raw, raw_length) != 0) {
             LOG_ERROR("TEST %zu FAILED RAW MISMATCH", i);
@@ -546,6 +539,40 @@ int main(int argc, char *argv[])
 
         free(raw);
     }
+
+    LOG_INFO("--------------  TEST UNIT  ----------------");
+    LOG_INFO("----- Testing build with null key ---------");
+    LOG_INFO("-------------------------------------------");
+
+    // Test with null key
+    LOG_INFO("  > Test with null key:");
+    hex_dump(ARISR_MSG_RAW_12, sizeof(ARISR_MSG_RAW_12));
+    LOG_INFO("-------------------------------------------");
+    if ((err = ARISR_proto_parse(&interface, ARISR_MSG_RAW_12, NULL, id)) != kARISR_OK) {
+        LOG_ERROR("TEST FAILED WITH ERROR = %d (%s) AND EXPECTED = %d", err, ARISR_ERR_NAMES[err] ,kARISR_OK);
+        return err;
+    }
+
+    LOG_INFO("-");
+    LOG_INFO("[TEST PASSED] Output = %d", err);
+    LOG_INFO("-");
+    LOG_INFO("-------------------------------------------");
+    LOG_INFO("  > Interface of Test %zu:", i);
+    printBuffer(&interface);
+
+    // Clean up the buffer
+    ARISR_proto_chunk_clean(&interface);
+
+
+    LOG_INFO("-------------------------------------------");
+    LOG_INFO("");
+    LOG_INFO("-------------------------------------------");
+
+
+
+    LOG_INFO("--------------  TEST UNIT  ----------------");
+    LOG_INFO("-------------- END OF TEST ----------------");
+    LOG_INFO("-------------------------------------------");
 
     return 0;
 }
