@@ -71,8 +71,49 @@ ARISR_UINT8 ARISR_proto_ctrl_getField(const ARISR_UINT8 *ctrl, ARISR_UINT32 mask
  * @param shift  Bit offset to start from to the last byte.
  * @return kARISR_OK if set correctly.
  */
-ARISR_UINT8 ARISR_proto_ctrl_setField(ARISR_UINT8 *ctrl, ARISR_UINT8 data, ARISR_UINT8 shift);
+ARISR_ERR ARISR_proto_ctrl_setField(ARISR_UINT8 *ctrl, ARISR_UINT8 data, ARISR_UINT8 shift);
 
+/**
+ * @brief Receives and parses raw data into an ARISR_CHUNK structure.
+ *
+ * This function reads the incoming data byte by byte, separating the protocol sections,
+ * allocating memory where needed, and checking the CRC values for both header and data decrypted.
+ *
+ * @param buffer [out] Pointer to the ARISR_CHUNK structure where parsed data will be stored and decrypted.
+ * @param data   [in]  Pointer to the raw input data buffer (e.g., from the network or file).
+ * @param key    [in]  The AES-128 key used to decrypt the 'aris' section.
+ * @param id     [in]  The expected Network ID section to match the incoming data.
+ * @return kARISR_OK on success, or an error code for invalid parameters, CRC mismatch, etc.
+ * 
+ * @note The caller is responsible for freeing the memory allocated for *buffer. With ARISR_proto_chunk_clean.
+ */
+ARISR_ERR ARISR_proto_parse(ARISR_CHUNK *buffer, const ARISR_UINT8 *data, const ARISR_AES128_KEY key, ARISR_UINT8 *id);
+
+/**
+ * @brief Prepare and send from ARISR_CHUNK structure to a raw data.
+ *
+ * This function creates the raw data byte by byte, acording to the protocol,
+ * allocating memory where needed, and calculating the CRC values for both header and data.
+ *
+ * @param buffer [out] Pointer to the raw input data buffer 
+ * @param length [out] Pointer to the size of the raw data buffer.
+ * @param data   [in]  Pointer to the struct output data buffer (e.g., from the sys).
+ * @param key    [in]  The AES-128 key used to encrypt the data section.
+ * @return kARISR_OK on success, or an error code for invalid parameters, CRC mismatch, etc.
+ * 
+ * @note The caller is responsible for freeing the memory allocated for *buffer.
+ */
+ARISR_ERR ARISR_proto_build(ARISR_UINT8 **buffer, ARISR_UINT32 *length, ARISR_CHUNK *data, const ARISR_AES128_KEY key);
+
+/**
+ * @brief Those functions are used step by step to pack, send, receive and unpack the data.
+ * 
+ * If you need this functios, please consider to define ARISR_PROTO_PARTIAL_FUNCTIONS
+ * 
+ * Otherwise you can use the function ARISR_proto_parse to do all the process in one function.
+ * And also you can use the function ARISR_proto_build to do all the process in one function.
+ */
+#if defined(ARISR_PROTO_PARTIAL_FUNCTIONS)
 /**
  * @brief Receives and parses raw data into an ARISR_CHUNK_RAW structure.
  *
@@ -84,6 +125,8 @@ ARISR_UINT8 ARISR_proto_ctrl_setField(ARISR_UINT8 *ctrl, ARISR_UINT8 data, ARISR
  * @param key    The AES-128 key used to decrypt the 'aris' section.
  * @param id     The expected Network ID section to match the incoming data.
  * @return kARISR_OK on success, or an error code for invalid parameters, CRC mismatch, etc.
+ * 
+ * @note The caller is responsible for freeing the memory allocated for *buffer. With ARISR_proto_raw_chunk_clean.
  */
 ARISR_ERR ARISR_proto_recv(ARISR_CHUNK_RAW *buffer, const ARISR_UINT8 *data, const ARISR_AES128_KEY key, ARISR_UINT8 *id);
 
@@ -98,6 +141,8 @@ ARISR_ERR ARISR_proto_recv(ARISR_CHUNK_RAW *buffer, const ARISR_UINT8 *data, con
  * @param data   [in]  Pointer to the raw input data buffer (e.g., from the network or file).
  * @param key    [in]  The AES-128 key used to decrypt the data section.
  * @return kARISR_OK on success, or an error code for invalid parameters, CRC mismatch, etc.
+ * 
+ * @note The caller is responsible for freeing the memory allocated for *buffer. With ARISR_proto_chunk_clean.
  */
 ARISR_ERR ARISR_proto_unpack(ARISR_CHUNK *buffer, ARISR_CHUNK_RAW *data, const ARISR_AES128_KEY key);
 
@@ -112,8 +157,27 @@ ARISR_ERR ARISR_proto_unpack(ARISR_CHUNK *buffer, ARISR_CHUNK_RAW *data, const A
  * @param data   [in]  Pointer to the struct output data buffer (e.g., from the sys).
  * @param key    [in]  The AES-128 key used to encrypt the data section.
  * @return kARISR_OK on success
+ * 
+ * @note The caller is responsible for freeing the memory allocated for *buffer. With ARISR_proto_raw_chunk_clean.
  */
 ARISR_ERR ARISR_proto_pack(ARISR_CHUNK_RAW *buffer, ARISR_CHUNK *data, const ARISR_AES128_KEY key);
+
+/**
+ * @brief Prepare and send from ARISR_CHUNK_RAW structure to a raw data.
+ *
+ * This function creates the raw data byte by byte, acording to the protocol,
+ * allocating memory where needed, and calculating the CRC values for both header and data.
+ *
+ * @param buffer [out] Pointer to the raw input data buffer 
+ * @param data   [in]  Pointer to the ARISR_CHUNK_RAW structure where parsed data will be stored.
+ * @param length [out] Pointer to the size of the raw data buffer.
+ * @return kARISR_OK on success, or an error code for invalid parameters, CRC mismatch, etc.
+ * 
+ * @note The caller is responsible for freeing the memory allocated for *buffer.
+ */
+ARISR_ERR ARISR_proto_send(ARISR_UINT8 **buffer, ARISR_CHUNK_RAW *data, ARISR_UINT32 *length);
+
+#endif // ARISR_PROTO_PARTIAL_FUNCTIONS
 
 #endif
 

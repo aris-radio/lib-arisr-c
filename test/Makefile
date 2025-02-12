@@ -13,7 +13,7 @@ OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(notdir $(SRCS)))
 
 # Compiler settings
 CC = gcc
-CFLAGS = -Wall -Wextra -I$(INC_DIR)
+CFLAGS = -Wall -Wextra -I$(INC_DIR) -DARISR_PROTO_PARTIAL_FUNCTIONS
 VPATH = $(SRC_DIR):.
 
 # Default target

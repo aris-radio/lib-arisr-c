@@ -31,6 +31,9 @@
 #define ARISR_ID   \
 { 0x00, 0x11, 0x22, 0x33 }
 
+#define ARISR_ARIS \
+{ 0x41, 0x52, 0x49, 0x53 }
+
 #define ARISR_MSG_KEY       \
 { 0x00, 0x11, 0x22, 0x33,   \
   0x44, 0x55, 0x66, 0x77,   \
@@ -329,7 +332,7 @@ static const ARISR_UINT8 ARISR_MSG_RAW_11[] =
 
 
 // Complete message without error with default key
-static const ARISR_UINT8 ARISR_MSG_RAW_13[] =
+static const ARISR_UINT8 ARISR_MSG_RAW_12[] =
 {
     0x00, 0x11, 0x22, 0x33,
     0x41, 0x52, 0x49, 0x53,
@@ -380,23 +383,259 @@ typedef struct {
     ARISR_UINT8 freq_switch;
     const ARISR_UINT8 *data_plain;
     ARISR_ERR expected_unpack;
-} ARISR_TEST_ELEMENT;
+} ARISR_TEST_ELEMENT_UNPACK;
 
 
-static const ARISR_TEST_ELEMENT ARISR_RAW_TEST[] = {
-    { ARISR_MSG_RAW_1, sizeof(ARISR_MSG_RAW_1), kARISR_OK, 1, 0, 0, 0, 1, 0, 1, 110, 0, 0, 0, 0, 0, ARISR_MSG_DATA_0, 0 },
-    { ARISR_MSG_RAW_2, sizeof(ARISR_MSG_RAW_2), kARISR_OK, 1, 0, 0, 0, 1, 0, 1, 110, 1, sizeof(ARISR_MSG_DATA_1), 0, 0, 0, ARISR_MSG_DATA_1, 0 },
-    { ARISR_MSG_RAW_3, sizeof(ARISR_MSG_RAW_3), kARISR_OK, 1, 2, 0, 0, 1, 0, 1, 110, 1, sizeof(ARISR_MSG_DATA_1), 0, 0, 0, ARISR_MSG_DATA_1, 0 },
-    { ARISR_MSG_RAW_4, sizeof(ARISR_MSG_RAW_4), kARISR_OK, 1, 2, 0, 0, 1, 0, 1, 110, 1, 0, 0, 0, 0, ARISR_MSG_DATA_1, 0 },
+static const ARISR_TEST_ELEMENT_UNPACK ARISR_RAW_TEST_UNPACK[] = {
+    { ARISR_MSG_RAW_1, sizeof(ARISR_MSG_RAW_1), kARISR_OK, 1, 0, 0, 0, 1, 0, 1, 110, 0, 0, 0, 0, 0, ARISR_MSG_DATA_0, kARISR_OK },
+    { ARISR_MSG_RAW_2, sizeof(ARISR_MSG_RAW_2), kARISR_OK, 1, 0, 0, 0, 1, 0, 1, 110, 1, sizeof(ARISR_MSG_DATA_1), 0, 0, 0, ARISR_MSG_DATA_1, kARISR_OK },
+    { ARISR_MSG_RAW_3, sizeof(ARISR_MSG_RAW_3), kARISR_OK, 1, 2, 0, 0, 1, 0, 1, 110, 1, sizeof(ARISR_MSG_DATA_1), 0, 0, 0, ARISR_MSG_DATA_1, kARISR_OK },
+    { ARISR_MSG_RAW_4, sizeof(ARISR_MSG_RAW_4), kARISR_OK, 1, 2, 0, 0, 1, 0, 1, 110, 1, 0, 0, 0, 0, ARISR_MSG_DATA_1, kARISR_OK },
     { ARISR_MSG_RAW_5, sizeof(ARISR_MSG_RAW_5), kARISR_ERR_NOT_SAME_ID, ARISR_TEST_NULL_CTRL },
     { ARISR_MSG_RAW_6, sizeof(ARISR_MSG_RAW_6), kARISR_ERR_NOT_SAME_CRC_HEADER, ARISR_TEST_NULL_CTRL },
     { ARISR_MSG_RAW_7, sizeof(ARISR_MSG_RAW_7), kARISR_ERR_NOT_SAME_CRC_DATA, ARISR_TEST_NULL_CTRL },
     { ARISR_MSG_RAW_8, sizeof(ARISR_MSG_RAW_8), kARISR_ERR_NOT_SAME_ARIS, ARISR_TEST_NULL_CTRL },
     { ARISR_MSG_RAW_9, sizeof(ARISR_MSG_RAW_9), kARISR_ERR_NOT_SAME_END, ARISR_TEST_NULL_CTRL },
-    { ARISR_MSG_RAW_10, sizeof(ARISR_MSG_RAW_10), kARISR_OK, 1, 2, 0, 0, 1, 0, 1, 110, 1, sizeof(ARISR_MSG_DATA_2), 0, 0, 0, ARISR_MSG_DATA_2, 7  },
-    { ARISR_MSG_RAW_11, sizeof(ARISR_MSG_RAW_11), kARISR_OK, 1, 15, 0, 0, 1, 0, 1, 110, 1, sizeof(ARISR_MSG_DATA_3), 0, 0, 0, ARISR_MSG_DATA_3, 0 },
+    { ARISR_MSG_RAW_10, sizeof(ARISR_MSG_RAW_10), kARISR_OK, 1, 2, 0, 0, 1, 0, 1, 110, 1, sizeof(ARISR_MSG_DATA_2), 0, 0, 0, ARISR_MSG_DATA_2, kARISR_ERR_INVALID_PADDING },
+    { ARISR_MSG_RAW_11, sizeof(ARISR_MSG_RAW_11), kARISR_OK, 1, 15, 0, 0, 1, 0, 1, 110, 1, sizeof(ARISR_MSG_DATA_3), 0, 0, 0, ARISR_MSG_DATA_3, kARISR_OK },
 };
 
+
+
+// Test for ARISR_proto_pack
+
+/*
+    0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E,
+    0x00, 0x1B, 0x63, 0x84, 0x45, 0xE6,
+*/
+static const ARISR_UINT48 ARISR_DESTINARIONS_1[] = {
+    { 0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E },
+    { 0x00, 0x1B, 0x63, 0x84, 0x45, 0xE6 }
+};
+
+/*
+    0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E,
+    0x00, 0x1B, 0x63, 0x84, 0x45, 0xE6,
+    0x00, 0x1C, 0x4F, 0x7D, 0x58, 0xA3,
+    0x00, 0x1D, 0x5A, 0x9E, 0x62, 0xB4,
+    0x00, 0x1E, 0x6B, 0xAF, 0x71, 0xC5,
+    0x00, 0x1F, 0x7C, 0xB0, 0x82, 0xD6,
+    0x00, 0x20, 0x8D, 0xC1, 0x93, 0xE7,
+    0x00, 0x21, 0x9E, 0xD2, 0xA4, 0xF8,
+    0x00, 0x22, 0xAF, 0xE3, 0xB5, 0x09,
+    0x00, 0x23, 0xB0, 0xF4, 0xC6, 0x1A,
+    0x00, 0x24, 0xC1, 0x05, 0xD7, 0x2B,
+    0x00, 0x25, 0xD2, 0x16, 0xE8, 0x3C,
+    0x00, 0x26, 0xE3, 0x27, 0xF9, 0x4D,
+    0x00, 0x27, 0xF4, 0x38, 0x0A, 0x5E,
+    0x00, 0x28, 0x05, 0x49, 0x1B, 0x6F,
+*/
+static const ARISR_UINT48 ARISR_DESTINARIONS_2[] = {
+    { 0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E },
+    { 0x00, 0x1B, 0x63, 0x84, 0x45, 0xE6 },
+    { 0x00, 0x1C, 0x4F, 0x7D, 0x58, 0xA3 },
+    { 0x00, 0x1D, 0x5A, 0x9E, 0x62, 0xB4 },
+    { 0x00, 0x1E, 0x6B, 0xAF, 0x71, 0xC5 },
+    { 0x00, 0x1F, 0x7C, 0xB0, 0x82, 0xD6 },
+    { 0x00, 0x20, 0x8D, 0xC1, 0x93, 0xE7 },
+    { 0x00, 0x21, 0x9E, 0xD2, 0xA4, 0xF8 },
+    { 0x00, 0x22, 0xAF, 0xE3, 0xB5, 0x09 },
+    { 0x00, 0x23, 0xB0, 0xF4, 0xC6, 0x1A },
+    { 0x00, 0x24, 0xC1, 0x05, 0xD7, 0x2B },
+    { 0x00, 0x25, 0xD2, 0x16, 0xE8, 0x3C },
+    { 0x00, 0x26, 0xE3, 0x27, 0xF9, 0x4D },
+    { 0x00, 0x27, 0xF4, 0x38, 0x0A, 0x5E },
+    { 0x00, 0x28, 0x05, 0x49, 0x1B, 0x6F }
+};
+
+/**
+ *  ARISR_MSG_RAW_1
+ */
+static const ARISR_CHUNK ARISR_MSG_1 =
+{
+    .id = ARISR_ID,
+    .aris = ARISR_ARIS,
+    .ctrl = {
+        .version = 1,
+        .destinations = 0,
+        .option = 0,
+        .from = 0,
+        .sequence = 1,
+        .retry = 0,
+        .more_data = 1,
+        .identifier = 110,
+        .more_header = 0
+    },
+    .origin = { 0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E },
+    .destinationA = { 0xFA, 0x16, 0x3E, 0x2F, 0xEC, 0xA8 }
+};
+
+/**
+ *  ARISR_MSG_RAW_2
+ */
+static const ARISR_CHUNK ARISR_MSG_2 = 
+{
+    .id = ARISR_ID,
+    .aris = ARISR_ARIS,
+    .ctrl = {
+        .version = 1,
+        .destinations = 0,
+        .option = 0,
+        .from = 0,
+        .sequence = 1,
+        .retry = 0,
+        .more_data = 1,
+        .identifier = 110,
+        .more_header = 1
+    },
+    .origin = { 0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E },
+    .destinationA = { 0xFA, 0x16, 0x3E, 0x2F, 0xEC, 0xA8 },
+    .ctrl2 = {
+        .data_length = sizeof(ARISR_MSG_DATA_1),
+        .feature = 0,
+        .neg_answer = 0,
+        .freq_switch = 0
+    },
+    .data = (ARISR_UINT8 *) ARISR_MSG_DATA_1
+};
+
+/**
+ *  ARISR_MSG_RAW_3
+ */
+static const ARISR_CHUNK ARISR_MSG_3 =
+{
+    .id = ARISR_ID,
+    .aris = ARISR_ARIS,
+    .ctrl = {
+        .version = 1,
+        .destinations = 2,
+        .option = 0,
+        .from = 0,
+        .sequence = 1,
+        .retry = 0,
+        .more_data = 1,
+        .identifier = 110,
+        .more_header = 1
+    },
+    .origin = { 0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E },
+    .destinationA = { 0xFA, 0x16, 0x3E, 0x2F, 0xEC, 0xA8 },
+    .ctrl2 = {
+        .data_length = sizeof(ARISR_MSG_DATA_1),
+        .feature = 0,
+        .neg_answer = 0,
+        .freq_switch = 0
+    },
+    // ARISR_UINT48 *destinationsB;        // ... n (destinations)*6 Bytes
+    .destinationsB = (ARISR_UINT48 *) ARISR_DESTINARIONS_1,
+    .data = (ARISR_UINT8 *) ARISR_MSG_DATA_1
+};
+
+/**
+ *  ARISR_MSG_RAW_4
+ */
+static const ARISR_CHUNK ARISR_MSG_4 =
+{
+    .id = ARISR_ID,
+    .aris = ARISR_ARIS,
+    .ctrl = {
+        .version = 1,
+        .destinations = 2,
+        .option = 0,
+        .from = 0,
+        .sequence = 1,
+        .retry = 0,
+        .more_data = 1,
+        .identifier = 110,
+        .more_header = 1
+    },
+    .origin = { 0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E },
+    .destinationA = { 0xFA, 0x16, 0x3E, 0x2F, 0xEC, 0xA8 },
+    .ctrl2 = {
+        .data_length = 0,
+        .feature = 0,
+        .neg_answer = 0,
+        .freq_switch = 0
+    },
+    .destinationsB = (ARISR_UINT48 *) ARISR_DESTINARIONS_1
+};
+
+// Complete message without error
+/**
+ * ARISR_MSG_RAW_11
+ */
+static const ARISR_CHUNK ARISR_MSG_11 =
+{
+    .id = ARISR_ID,
+    .aris = ARISR_ARIS,
+    .ctrl = {
+        .version = 1,
+        .destinations = 15,
+        .option = 0,
+        .from = 0,
+        .sequence = 1,
+        .retry = 0,
+        .more_data = 1,
+        .identifier = 110,
+        .more_header = 1
+    },
+    .origin = { 0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E },
+    .destinationA = { 0xFA, 0x16, 0x3E, 0x2F, 0xEC, 0xA8 },
+    .ctrl2 = {
+        .data_length = sizeof(ARISR_MSG_DATA_3),
+        .feature = 0,
+        .neg_answer = 0,
+        .freq_switch = 0
+    },
+    .destinationsB = (ARISR_UINT48 *) ARISR_DESTINARIONS_2,
+    .data = (ARISR_UINT8 *) ARISR_MSG_DATA_3
+};
+
+// Complete message without error with default key
+/**
+ * ARISR_MSG_RAW_12
+ */
+static const ARISR_CHUNK ARISR_MSG_12 =
+{
+    .id = ARISR_ID,
+    .aris = ARISR_ARIS,
+    .ctrl = {
+        .version = 2,
+        .destinations = 15,
+        .option = 0,
+        .from = 0,
+        .sequence = 1,
+        .retry = 0,
+        .more_data = 1,
+        .identifier = 110,
+        .more_header = 1
+    },
+    .origin = { 0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E },
+    .destinationA = { 0xFA, 0x16, 0x3E, 0x2F, 0xEC, 0xA8 },
+    .ctrl2 = {
+        .data_length = sizeof(ARISR_MSG_DATA_3),
+        .feature = 0,
+        .neg_answer = 0,
+        .freq_switch = 0
+    },
+    .destinationsB = (ARISR_UINT48 *) ARISR_DESTINARIONS_2,
+    .data = (ARISR_UINT8 *) ARISR_MSG_DATA_3
+};
+
+
+typedef struct {
+    const ARISR_CHUNK *chunk;
+    const ARISR_UINT8 *expected_raw;
+    const ARISR_UINT32 expected_length;
+} ARISR_TEST_ELEMENT_PACK;
+
+
+static const ARISR_TEST_ELEMENT_PACK ARISR_RAW_TEST_PACK[] = {
+    { &ARISR_MSG_1, ARISR_MSG_RAW_1, sizeof(ARISR_MSG_RAW_1) },
+    { &ARISR_MSG_2, ARISR_MSG_RAW_2, sizeof(ARISR_MSG_RAW_2) },
+    { &ARISR_MSG_3, ARISR_MSG_RAW_3, sizeof(ARISR_MSG_RAW_3) },
+    { &ARISR_MSG_4, ARISR_MSG_RAW_4, sizeof(ARISR_MSG_RAW_4) },
+    { &ARISR_MSG_11, ARISR_MSG_RAW_11, sizeof(ARISR_MSG_RAW_11) }
+};
 
 #endif
 

@@ -57,6 +57,15 @@ void printBufferRaw(ARISR_CHUNK_RAW *buffer);
  */
 void printBuffer(ARISR_CHUNK *buffer);
 
+/**
+ * @brief Do all the checks
+ *
+ * This function returns the checking of the buffer.
+ *
+ * @param buffer Pointer to the ARISR_CHUNK structure to be printed.
+ */
+int checkBuffer(ARISR_CHUNK *interface, int i);
+
 
 
 void printBufferRaw(ARISR_CHUNK_RAW *buffer)
@@ -161,6 +170,95 @@ void printBuffer(ARISR_CHUNK *buffer)
     }
 }
 
+int checkBuffer(ARISR_CHUNK *interface, int i)
+{
+    // Check if version match
+    if (interface->ctrl.version != ARISR_RAW_TEST_UNPACK[i-1].version) {
+        LOG_ERROR("TEST %zu FAILED VERSION MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl.version, ARISR_RAW_TEST_UNPACK[i-1].version);
+        return -1;
+    }
+
+    // Check if destinations match
+    if (interface->ctrl.destinations != ARISR_RAW_TEST_UNPACK[i-1].destinations) {
+        LOG_ERROR("TEST %zu FAILED DESTINATIONS MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl.destinations, ARISR_RAW_TEST_UNPACK[i-1].destinations);
+        return -1;
+    }
+
+    // Check if option match
+    if (interface->ctrl.option != ARISR_RAW_TEST_UNPACK[i-1].option) {
+        LOG_ERROR("TEST %zu FAILED OPTION MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl.option, ARISR_RAW_TEST_UNPACK[i-1].option);
+        return -1;
+    }
+
+    // Check if from match
+    if (interface->ctrl.from != ARISR_RAW_TEST_UNPACK[i-1].from) {
+        LOG_ERROR("TEST %zu FAILED FROM MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl.from, ARISR_RAW_TEST_UNPACK[i-1].from);
+        return -1;
+    }
+
+    // Check if sequence match
+    if (interface->ctrl.sequence != ARISR_RAW_TEST_UNPACK[i-1].sequence) {
+        LOG_ERROR("TEST %zu FAILED SEQUENCE MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl.sequence, ARISR_RAW_TEST_UNPACK[i-1].sequence);
+        return -1;
+    }
+
+    // Check if retry match
+    if (interface->ctrl.retry != ARISR_RAW_TEST_UNPACK[i-1].retry) {
+        LOG_ERROR("TEST %zu FAILED RETRY MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl.retry, ARISR_RAW_TEST_UNPACK[i-1].retry);
+        return -1;
+    }
+
+    // Check if more_data match
+    if (interface->ctrl.more_data != ARISR_RAW_TEST_UNPACK[i-1].more_data) {
+        LOG_ERROR("TEST %zu FAILED MORE DATA MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl.more_data, ARISR_RAW_TEST_UNPACK[i-1].more_data);
+        return -1;
+    }
+
+    // Check if identifier match
+    if (interface->ctrl.identifier != ARISR_RAW_TEST_UNPACK[i-1].identifier) {
+        LOG_ERROR("TEST %zu FAILED IDENTIFIER MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl.identifier, ARISR_RAW_TEST_UNPACK[i-1].identifier);
+        return -1;
+    }
+
+    // Check if more_header match
+    if (interface->ctrl.more_header != ARISR_RAW_TEST_UNPACK[i-1].more_header) {
+        LOG_ERROR("TEST %zu FAILED MORE HEADER MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl.more_header, ARISR_RAW_TEST_UNPACK[i-1].more_header);
+        return -1;
+    }
+
+    // Check if data_length match
+    if (interface->ctrl2.data_length != ARISR_RAW_TEST_UNPACK[i-1].data_length) {
+        LOG_ERROR("TEST %zu FAILED DATA LENGTH MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl2.data_length, ARISR_RAW_TEST_UNPACK[i-1].data_length);
+        return -1;
+    }
+
+    // Check if feature match
+    if (interface->ctrl2.feature != ARISR_RAW_TEST_UNPACK[i-1].feature) {
+        LOG_ERROR("TEST %zu FAILED FEATURE MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl2.feature, ARISR_RAW_TEST_UNPACK[i-1].feature);
+        return -1;
+    }
+
+    // Check if neg_answer match
+    if (interface->ctrl2.neg_answer != ARISR_RAW_TEST_UNPACK[i-1].neg_answer) {
+        LOG_ERROR("TEST %zu FAILED NEG ANSWER MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl2.neg_answer, ARISR_RAW_TEST_UNPACK[i-1].neg_answer);
+        return -1;
+    }
+
+    // Check if freq_switch match
+    if (interface->ctrl2.freq_switch != ARISR_RAW_TEST_UNPACK[i-1].freq_switch) {
+        LOG_ERROR("TEST %zu FAILED FREQ SWITCH MISMATCH = %d AND EXPECTED = %d", i, interface->ctrl2.freq_switch, ARISR_RAW_TEST_UNPACK[i-1].freq_switch);
+        return -1;
+    }
+
+    // Check if data match
+    if (memcmp(interface->data, ARISR_RAW_TEST_UNPACK[i-1].data_plain, interface->ctrl2.data_length) != 0) {
+        LOG_ERROR("TEST %zu FAILED DATA MISMATCH", i);
+        return -1;
+    }
+
+
+    return 0;
+}
 // =================================================================================================
 
 int main(int argc, char *argv[])
@@ -175,6 +273,11 @@ int main(int argc, char *argv[])
     ARISR_AES128_KEY key = ARISR_MSG_KEY;
     ARISR_UINT8 id[] = ARISR_ID;
 
+    ARISR_CHUNK_RAW buffer;
+    ARISR_CHUNK interface;
+    ARISR_UINT8 *raw = NULL;
+    ARISR_UINT32 raw_length;
+
     // =====================================
 
     LOG_INFO("--------------  TEST UNIT  ----------------");
@@ -187,17 +290,15 @@ int main(int argc, char *argv[])
 
 
     // ========== TEST RECV AND UNPACK ==============
-    ARISR_CHUNK_RAW buffer;
-    ARISR_CHUNK interface;
 
-    for (i = 1; i <= sizeof(ARISR_RAW_TEST) / sizeof(ARISR_RAW_TEST[0]); i++) {
+    for (i = 1; i <= sizeof(ARISR_RAW_TEST_UNPACK) / sizeof(ARISR_RAW_TEST_UNPACK[0]); i++) {
         LOG_INFO("  > Test %zu:", i);
         // Test x - Receive and parse raw data case 1
         // DUMP
-        hex_dump(ARISR_RAW_TEST[i-1].msg, ARISR_RAW_TEST[i-1].length);
+        hex_dump(ARISR_RAW_TEST_UNPACK[i-1].msg, ARISR_RAW_TEST_UNPACK[i-1].length);
 
-        if ((err = ARISR_proto_recv(&buffer, ARISR_RAW_TEST[i-1].msg, key, id)) != ARISR_RAW_TEST[i-1].expected_recv) {
-            LOG_ERROR("TEST %zu FAILED WITH ERROR = %d AND EXPECTED = %d", i, err, ARISR_RAW_TEST[i-1].expected_recv);
+        if ((err = ARISR_proto_recv(&buffer, ARISR_RAW_TEST_UNPACK[i-1].msg, key, id)) != ARISR_RAW_TEST_UNPACK[i-1].expected_recv) {
+            LOG_ERROR("TEST %zu FAILED WITH ERROR = %d (%s) AND EXPECTED = %d", i, err, ARISR_ERR_NAMES[err], ARISR_RAW_TEST_UNPACK[i-1].expected_recv);
             return err;
         }
 
@@ -211,96 +312,15 @@ int main(int argc, char *argv[])
             LOG_INFO("-------------------------------------------");
             LOG_INFO("  > Interface of Test %zu:", i);
             // Unpack the raw data into a structured ARISR_CHUNK
-            if ((err = ARISR_proto_unpack(&interface, &buffer, key)) != ARISR_RAW_TEST[i-1].expected_unpack) {
-                LOG_ERROR("TEST %zu FAILED UNPACKING WITH ERROR = %d", i, err);
+            if ((err = ARISR_proto_unpack(&interface, &buffer, key)) != ARISR_RAW_TEST_UNPACK[i-1].expected_unpack) {
+                LOG_ERROR("TEST %zu FAILED UNPACKING WITH ERROR = %d (%s)", i, err, ARISR_ERR_NAMES[err]);
                 return err;
             }
-
             // Clean up the raw buffer
             ARISR_proto_raw_chunk_clean(&buffer);
 
             if (err == kARISR_OK) {
-                // Check if version match
-                if (interface.ctrl.version != ARISR_RAW_TEST[i-1].version) {
-                    LOG_ERROR("TEST %zu FAILED VERSION MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.version, ARISR_RAW_TEST[i-1].version);
-                    return -1;
-                }
-
-                // Check if destinations match
-                if (interface.ctrl.destinations != ARISR_RAW_TEST[i-1].destinations) {
-                    LOG_ERROR("TEST %zu FAILED DESTINATIONS MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.destinations, ARISR_RAW_TEST[i-1].destinations);
-                    return -1;
-                }
-
-                // Check if option match
-                if (interface.ctrl.option != ARISR_RAW_TEST[i-1].option) {
-                    LOG_ERROR("TEST %zu FAILED OPTION MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.option, ARISR_RAW_TEST[i-1].option);
-                    return -1;
-                }
-
-                // Check if from match
-                if (interface.ctrl.from != ARISR_RAW_TEST[i-1].from) {
-                    LOG_ERROR("TEST %zu FAILED FROM MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.from, ARISR_RAW_TEST[i-1].from);
-                    return -1;
-                }
-
-                // Check if sequence match
-                if (interface.ctrl.sequence != ARISR_RAW_TEST[i-1].sequence) {
-                    LOG_ERROR("TEST %zu FAILED SEQUENCE MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.sequence, ARISR_RAW_TEST[i-1].sequence);
-                    return -1;
-                }
-
-                // Check if retry match
-                if (interface.ctrl.retry != ARISR_RAW_TEST[i-1].retry) {
-                    LOG_ERROR("TEST %zu FAILED RETRY MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.retry, ARISR_RAW_TEST[i-1].retry);
-                    return -1;
-                }
-
-                // Check if more_data match
-                if (interface.ctrl.more_data != ARISR_RAW_TEST[i-1].more_data) {
-                    LOG_ERROR("TEST %zu FAILED MORE DATA MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.more_data, ARISR_RAW_TEST[i-1].more_data);
-                    return -1;
-                }
-
-                // Check if identifier match
-                if (interface.ctrl.identifier != ARISR_RAW_TEST[i-1].identifier) {
-                    LOG_ERROR("TEST %zu FAILED IDENTIFIER MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.identifier, ARISR_RAW_TEST[i-1].identifier);
-                    return -1;
-                }
-
-                // Check if more_header match
-                if (interface.ctrl.more_header != ARISR_RAW_TEST[i-1].more_header) {
-                    LOG_ERROR("TEST %zu FAILED MORE HEADER MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl.more_header, ARISR_RAW_TEST[i-1].more_header);
-                    return -1;
-                }
-
-                // Check if data_length match
-                if (interface.ctrl2.data_length != ARISR_RAW_TEST[i-1].data_length) {
-                    LOG_ERROR("TEST %zu FAILED DATA LENGTH MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl2.data_length, ARISR_RAW_TEST[i-1].data_length);
-                    return -1;
-                }
-
-                // Check if feature match
-                if (interface.ctrl2.feature != ARISR_RAW_TEST[i-1].feature) {
-                    LOG_ERROR("TEST %zu FAILED FEATURE MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl2.feature, ARISR_RAW_TEST[i-1].feature);
-                    return -1;
-                }
-
-                // Check if neg_answer match
-                if (interface.ctrl2.neg_answer != ARISR_RAW_TEST[i-1].neg_answer) {
-                    LOG_ERROR("TEST %zu FAILED NEG ANSWER MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl2.neg_answer, ARISR_RAW_TEST[i-1].neg_answer);
-                    return -1;
-                }
-
-                // Check if freq_switch match
-                if (interface.ctrl2.freq_switch != ARISR_RAW_TEST[i-1].freq_switch) {
-                    LOG_ERROR("TEST %zu FAILED FREQ SWITCH MISMATCH = %d AND EXPECTED = %d", i, interface.ctrl2.freq_switch, ARISR_RAW_TEST[i-1].freq_switch);
-                    return -1;
-                }
-
-                // Check if data match
-                if (memcmp(interface.data, ARISR_RAW_TEST[i-1].data_plain, interface.ctrl2.data_length) != 0) {
-                    LOG_ERROR("TEST %zu FAILED DATA MISMATCH", i);
+                if (checkBuffer(&interface, i) != 0) {
                     return -1;
                 }
             }
@@ -313,6 +333,7 @@ int main(int argc, char *argv[])
                 // Print the interface buffer
                 printBuffer(&interface);
             } else {
+                LOG_INFO("-");
                 LOG_INFO("TEST PASSED, BUT CONTENT CANNOT BE PARSED due to ERR = %d", err);
             }
         }
@@ -331,9 +352,10 @@ int main(int argc, char *argv[])
 
     // Test with null key
     LOG_INFO("  > Test with null key:");
-    hex_dump(ARISR_MSG_RAW_13, sizeof(ARISR_MSG_RAW_13));
-    if ((err = ARISR_proto_recv(&buffer, ARISR_MSG_RAW_13, NULL, id)) != kARISR_OK) {
-        LOG_ERROR("TEST FAILED WITH ERROR = %d AND EXPECTED = %d", err, kARISR_OK);
+    hex_dump(ARISR_MSG_RAW_12, sizeof(ARISR_MSG_RAW_12));
+    LOG_INFO("-------------------------------------------");
+    if ((err = ARISR_proto_recv(&buffer, ARISR_MSG_RAW_12, NULL, id)) != kARISR_OK) {
+        LOG_ERROR("TEST FAILED WITH ERROR = %d (%s) AND EXPECTED = %d", err, ARISR_ERR_NAMES[err] ,kARISR_OK);
         return err;
     }
 
@@ -344,14 +366,186 @@ int main(int argc, char *argv[])
 
     // Unpacking
     if ((err = ARISR_proto_unpack(&interface, &buffer, NULL)) != kARISR_OK) {
-        LOG_ERROR("TEST FAILED UNPACKING WITH ERROR = %d", err);
+        LOG_ERROR("TEST FAILED UNPACKING WITH ERROR = %d (%s)", err, ARISR_ERR_NAMES[err]);
         return err;
     }
+    LOG_INFO("-------------------------------------------");
+    LOG_INFO("  > Interface of Test %zu:", i);
     printBuffer(&interface);
 
     // Clean up the buffer
     ARISR_proto_raw_chunk_clean(&buffer);
     ARISR_proto_chunk_clean(&interface);
+
+
+    // =====================================
+
+    LOG_INFO("--------------  TEST UNIT  ----------------");
+    LOG_INFO("-------   Start packing raw data   --------");
+    LOG_INFO("-------------------------------------------");
+    // 16 bytes key
+    LOG_INFO("  > Using key:");
+    hex_dump(key, ARISR_AES128_BLOCK_SIZE);
+    LOG_INFO("-------------------------------------------");
+
+    // ========== TEST PACK AND SEND ==============
+    for (i = 1; i <= sizeof(ARISR_RAW_TEST_PACK) / sizeof(ARISR_RAW_TEST_PACK[0]); i++) {
+        LOG_INFO("  > Test %zu:", i);
+        // Test x - Pack and send raw data case 1
+        // DUMP
+        printBuffer((ARISR_CHUNK *) ARISR_RAW_TEST_PACK[i-1].chunk);
+
+        if ((err = ARISR_proto_pack(&buffer, (ARISR_CHUNK *) ARISR_RAW_TEST_PACK[i-1].chunk, key)) != kARISR_OK) {
+            LOG_ERROR("TEST %zu FAILED WITH ERROR = %d (%s) AND EXPECTED = %d", i, err, ARISR_ERR_NAMES[err], kARISR_OK);
+            return err;
+        }
+        LOG_INFO("-------------------------------------------");
+        LOG_INFO("-");
+        LOG_INFO("[TEST %zu PASSED] Output = %d (%s)", i, err, ARISR_ERR_NAMES[err]);
+        LOG_INFO("-");
+        printBufferRaw(&buffer);
+
+        if (err == kARISR_OK) {
+            //
+            LOG_INFO("-------------------------------------------");
+            LOG_INFO("  > Data of Test %zu:", i);
+
+            if ((err = ARISR_proto_send(&raw, &buffer, &raw_length)) != kARISR_OK) {
+                LOG_ERROR("TEST %zu FAILED IN RAW WITH ERROR = %d (%s)", i, err, ARISR_ERR_NAMES[err]);
+                return err;
+            }
+
+            // Clean up the raw buffer
+            ARISR_proto_raw_chunk_clean(&buffer);
+
+            LOG_INFO("-");
+            LOG_INFO("[TEST %zu PASSED] Output = %d", i, err);
+            LOG_INFO("-");
+
+            // DUMP
+            hex_dump(raw, raw_length);
+            LOG_INFO("RAW LENGTH = %d", raw_length);
+            
+            LOG_INFO("-");
+
+            // Check if the raw data matches the expected
+            if (raw_length != ARISR_RAW_TEST_PACK[i-1].expected_length || memcmp(raw, ARISR_RAW_TEST_PACK[i-1].expected_raw, raw_length) != 0) {
+                LOG_ERROR("TEST %zu FAILED RAW MISMATCH", i);
+                return -1;
+            }
+
+            LOG_INFO("TEST %zu PASSED RAW MATCH", i);
+
+            LOG_INFO("-------------------------------------------");
+            LOG_INFO("");
+            LOG_INFO("-------------------------------------------");
+
+            free(raw);
+        }
+
+    }
+
+
+    // ========== TEST PARSE AND BUILD ==============
+    LOG_INFO("--------------  TEST UNIT  ----------------");
+    LOG_INFO("-------   Start parsing raw data   --------");
+    LOG_INFO("-------------------------------------------");
+    // 16 bytes key
+    LOG_INFO("  > Using key:");
+    hex_dump(key, ARISR_AES128_BLOCK_SIZE);
+    LOG_INFO("-------------------------------------------");
+
+
+    // ========== TEST RECV AND UNPACK ==============
+
+    for (i = 1; i <= sizeof(ARISR_RAW_TEST_UNPACK) / sizeof(ARISR_RAW_TEST_UNPACK[0]); i++) {
+        LOG_INFO("  > Test %zu:", i);
+        // Test x - Receive and parse raw data case 1
+        // DUMP
+        hex_dump(ARISR_RAW_TEST_UNPACK[i-1].msg, ARISR_RAW_TEST_UNPACK[i-1].length);
+        
+        //
+        LOG_INFO("  > Interface of Test %zu:", i);
+        // Parse the raw data into a structured ARISR_CHUNK
+        if ((err = ARISR_proto_parse(&interface, ARISR_RAW_TEST_UNPACK[i-1].msg, key, id)) != ARISR_RAW_TEST_UNPACK[i-1].expected_recv && err != ARISR_RAW_TEST_UNPACK[i-1].expected_unpack) {
+            LOG_ERROR("TEST %zu FAILED PARSING WITH ERROR = %d (%s) AND EXPECTED = %d", i, err, ARISR_ERR_NAMES[err], ARISR_RAW_TEST_UNPACK[i-1].expected_recv);
+            return err;
+        }
+
+        if (err == kARISR_OK) {
+            if (checkBuffer(&interface, i) != 0) {
+                return -1;
+            }
+
+            LOG_INFO("-");
+            LOG_INFO("[TEST %zu PASSED] Parsing = %d", i, err);
+            LOG_INFO("-");
+    
+            printBuffer(&interface);
+        } else {
+            LOG_INFO("-");
+            LOG_INFO("TEST PASSED, BUT CONTENT CANNOT BE PARSED due to ERR = %d", err);
+        }
+
+        // Clean up the buffer
+        ARISR_proto_chunk_clean(&interface);
+        LOG_INFO("-------------------------------------------");
+        LOG_INFO("");
+        LOG_INFO("-------------------------------------------");
+
+    }
+
+
+    // =====================================
+
+    LOG_INFO("--------------  TEST UNIT  ----------------");
+    LOG_INFO("-------  Start building raw data   --------");
+    LOG_INFO("-------------------------------------------");
+    // 16 bytes key
+    LOG_INFO("  > Using key:");
+    hex_dump(key, ARISR_AES128_BLOCK_SIZE);
+    LOG_INFO("-------------------------------------------");
+
+    // ========== TEST PACK AND SEND ==============
+    for (i = 1; i <= sizeof(ARISR_RAW_TEST_PACK) / sizeof(ARISR_RAW_TEST_PACK[0]); i++) {
+        LOG_INFO("  > Test %zu:", i);
+        // Test x - Pack and send raw data case 1
+        // DUMP
+        printBuffer((ARISR_CHUNK *) ARISR_RAW_TEST_PACK[i-1].chunk);
+
+        if ((err = ARISR_proto_build(&raw, &raw_length, (ARISR_CHUNK *) ARISR_RAW_TEST_PACK[i-1].chunk, key)) != kARISR_OK) {
+            LOG_ERROR("TEST %zu FAILED WITH ERROR = %d (%s) AND EXPECTED = %d", i, err, ARISR_ERR_NAMES[err], kARISR_OK);
+            return err;
+        }
+
+        fprintf(stdout, "RAW LENGTH = %d\n", raw_length);
+        fprintf(stdout, "RAW = ");
+        hex_dump(raw, raw_length);
+
+        fprintf(stdout, "EXPECTED LENGTH = %d\n", ARISR_RAW_TEST_PACK[i-1].expected_length);
+        fprintf(stdout, "EXPECTED RAW = ");
+        hex_dump(ARISR_RAW_TEST_PACK[i-1].expected_raw, ARISR_RAW_TEST_PACK[i-1].expected_length);
+        // Check if the raw data matches the expected
+        if (raw_length != ARISR_RAW_TEST_PACK[i-1].expected_length || memcmp(raw, ARISR_RAW_TEST_PACK[i-1].expected_raw, raw_length) != 0) {
+            LOG_ERROR("TEST %zu FAILED RAW MISMATCH", i);
+            return -1;
+        }
+
+        LOG_INFO("-------------------------------------------");
+        LOG_INFO("-");
+        LOG_INFO("[TEST %zu PASSED] Output = %d (%s)", i, err, ARISR_ERR_NAMES[err]);
+        LOG_INFO("-");
+        // DUMP
+        hex_dump(raw, raw_length);
+        LOG_INFO("-");
+        LOG_INFO("RAW LENGTH = %d", raw_length);
+
+        LOG_INFO("-------------------------------------------");
+        LOG_INFO("");
+        LOG_INFO("-------------------------------------------");
+
+        free(raw);
+    }
 
     return 0;
 }

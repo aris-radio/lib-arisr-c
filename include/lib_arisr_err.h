@@ -54,6 +54,27 @@ typedef ARISR_UINT32	ARISR_ERR;
 #define kARISR_ERR_CANNOT_DECRYPT         (ARISR_ERR)8
 #define kARISR_ERR_NOT_SAME_END           (ARISR_ERR)9
 #define kARISR_ERR_BUFFER_OVERFLOW        (ARISR_ERR)10
+#define kARISR_ERR_NULL_ORIGIN            (ARISR_ERR)11
+#define kARISR_ERR_NULL_DESTINATION       (ARISR_ERR)12
+
+/******************************************************************************/
+
+// Error names
+static const char *ARISR_ERR_NAMES[] = {
+    "kARISR_OK",
+    "kARISR_ERR_GENERIC",
+    "kARISR_ERR_NOT_SAME_ID",
+    "kARISR_ERR_NOT_SAME_ARIS",
+    "kARISR_ERR_NOT_SAME_CRC_HEADER",
+    "kARISR_ERR_NOT_SAME_CRC_DATA",
+    "kARISR_ERR_INVALID_ARGUMENT",
+    "kARISR_ERR_INVALID_PADDING",
+    "kARISR_ERR_CANNOT_DECRYPT",
+    "kARISR_ERR_NOT_SAME_END",
+    "kARISR_ERR_BUFFER_OVERFLOW",
+    "kARISR_ERR_NULL_ORIGIN",
+    "kARISR_ERR_NULL_DESTINATION"
+};
 
 #endif
 
