@@ -11,11 +11,12 @@ RUN apt-get update && apt-get install -y \
 # Set working directory inside the container
 WORKDIR /app
 
-# Copy the entire project except for ignored files
-COPY . .
+# Ensure the tmp directory exists for Valgrind logs
+RUN mkdir -p /app/tmp
 
-# Build the project: Clean and compile in the ./test directory
-RUN cd ./test && make clean && make
+# Copy the entrypoint script and give it execution permissions
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Run the compiled binary with Valgrind
-CMD ["valgrind", "--leak-check=full", "--show-leak-kinds=all", "./bin/arisr_test"]
+# Set the entrypoint
+ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]

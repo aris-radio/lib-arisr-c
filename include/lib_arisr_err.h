@@ -43,24 +43,24 @@ typedef ARISR_UINT32	ARISR_ERR;
 // GENERIC ERROR CODES
 //
 
-#define kARISR_OK					            (ARISR_ERR)0
-#define kARISR_ERR_GENERIC			         (ARISR_ERR)1
-#define kARISR_ERR_NOT_SAME_ID		      (ARISR_ERR)2
-#define kARISR_ERR_NOT_SAME_ARIS	         (ARISR_ERR)3
+#define kARISR_OK					       (ARISR_ERR)0
+#define kARISR_ERR_GENERIC			       (ARISR_ERR)1
+#define kARISR_ERR_NOT_SAME_ID		       (ARISR_ERR)2
+#define kARISR_ERR_NOT_SAME_ARIS	       (ARISR_ERR)3
 #define kARISR_ERR_NOT_SAME_CRC_HEADER	   (ARISR_ERR)4
 #define kARISR_ERR_NOT_SAME_CRC_DATA	   (ARISR_ERR)5
-#define kARISR_ERR_INVALID_ARGUMENT       (ARISR_ERR)6
-#define kARISR_ERR_INVALID_PADDING        (ARISR_ERR)7
-#define kARISR_ERR_CANNOT_DECRYPT         (ARISR_ERR)8
-#define kARISR_ERR_NOT_SAME_END           (ARISR_ERR)9
-#define kARISR_ERR_BUFFER_OVERFLOW        (ARISR_ERR)10
-#define kARISR_ERR_NULL_ORIGIN            (ARISR_ERR)11
-#define kARISR_ERR_NULL_DESTINATION       (ARISR_ERR)12
+#define kARISR_ERR_INVALID_ARGUMENT        (ARISR_ERR)6
+#define kARISR_ERR_INVALID_PADDING         (ARISR_ERR)7
+#define kARISR_ERR_CANNOT_DECRYPT          (ARISR_ERR)8
+#define kARISR_ERR_NOT_SAME_END            (ARISR_ERR)9
+#define kARISR_ERR_BUFFER_OVERFLOW         (ARISR_ERR)10
+#define kARISR_ERR_NULL_ORIGIN             (ARISR_ERR)11
+#define kARISR_ERR_NULL_DESTINATION        (ARISR_ERR)12
 
 /******************************************************************************/
 
 // Error names
-static const char *ARISR_ERR_NAMES[] = {
+static const char *ARISR_ERR_NAMES[] __attribute__((unused)) = {
     "kARISR_OK",
     "kARISR_ERR_GENERIC",
     "kARISR_ERR_NOT_SAME_ID",

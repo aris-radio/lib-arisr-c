@@ -67,14 +67,17 @@
 // TYPES
 //
 
-#ifdef ARISR_ENV_WIN32
+// Force use types from stdint.h
+#define ARISR_FORCE_USE_STDINT 1
+
+#if defined(ARISR_ENV_WIN32) && !ARISR_FORCE_USE_STDINT
 typedef unsigned char   ARISR_UINT8;
 typedef char            ARISR_SINT8;
 typedef unsigned short	ARISR_UINT16;
 typedef short			      ARISR_SINT16;
 typedef unsigned int	  ARISR_UINT32;
 typedef int				      ARISR_SINT32;
-#elif defined(ARISR_ENV_UNIX)
+#elif defined(ARISR_ENV_UNIX) && !ARISR_FORCE_USE_STDINT
 typedef unsigned char   ARISR_UINT8;
 typedef char            ARISR_SINT8;
 typedef unsigned int	  ARISR_UINT16;

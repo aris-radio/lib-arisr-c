@@ -4,11 +4,11 @@
 cd "$(dirname "$0")/.."
 
 # Set variables
-DOCKER_IMAGE_NAME="libarisr-valgrind"
+DOCKER_IMAGE_NAME="libarisr-build"
 DOCKERFILE_DIR="./docker"
 
 # Remove the existing Docker image
-echo "Removing existing Docker image: $DOCKER_IMAGE_NAME..."
+echo "Removing existing Docker image builded: $DOCKER_IMAGE_NAME..."
 docker rmi -f $DOCKER_IMAGE_NAME
 
 # Build the Docker image
@@ -21,6 +21,6 @@ if [ $? -ne 0 ]; then
 fi
 
 # Run the container
-echo "Running Valgrind inside Docker..."
+echo "Compiling library inside Docker..."
 # Volume mount
-docker run -it --rm --name $DOCKER_IMAGE_NAME -v $(pwd):/app $DOCKER_IMAGE_NAME
+docker run -it --rm --name $DOCKER_IMAGE_NAME -v $(pwd):/app $DOCKER_IMAGE_NAME make -C /app clean && make -C /app

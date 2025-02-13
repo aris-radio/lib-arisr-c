@@ -1,7 +1,7 @@
 .DS_Store
-tmp
-build
-bin
+tmp/
+build/
+bin/
 
 *.log
 log/*

@@ -36,6 +36,24 @@
 #include "lib_arisr_crypt.h"
 #include "lib_arisr.h"
 
+/**
+ * @brief Cleans (resets) the raw chunk buffer, freeing any allocated memory.
+ */
+#define ARISR_RAW_CLEAN_AND_RETURN(err_code) \
+    do { \
+        ARISR_proto_raw_chunk_clean(buffer); \
+        return err_code; \
+    } while (0)
+
+/**
+ * @brief Cleans (resets) the chunk buffer, freeing any allocated memory.
+ */
+#define ARISR_CLEAN_AND_RETURN(err_code) \
+    do { \
+        ARISR_proto_chunk_clean(buffer); \
+        return err_code; \
+    } while (0)
+
 
 /**
  * @brief Cleans (resets) the raw chunk buffer, freeing any allocated memory.
@@ -126,7 +144,9 @@ ARISR_ERR ARISR_proto_build(ARISR_UINT8 **buffer, ARISR_UINT32 *length, ARISR_CH
  * @param id     The expected Network ID section to match the incoming data.
  * @return kARISR_OK on success, or an error code for invalid parameters, CRC mismatch, etc.
  * 
- * @note The caller is responsible for freeing the memory allocated for *buffer. With ARISR_proto_raw_chunk_clean.
+ * @note The caller is responsible for freeing the memory allocated for *buffer only with return kARISR_OK.
+ * @note With ARISR_proto_raw_chunk_clean can free the memory.
+ * @note If any other error is returned, the buffer is not allocated.
  */
 ARISR_ERR ARISR_proto_recv(ARISR_CHUNK_RAW *buffer, const ARISR_UINT8 *data, const ARISR_AES128_KEY key, ARISR_UINT8 *id);
 
@@ -142,7 +162,9 @@ ARISR_ERR ARISR_proto_recv(ARISR_CHUNK_RAW *buffer, const ARISR_UINT8 *data, con
  * @param key    [in]  The AES-128 key used to decrypt the data section.
  * @return kARISR_OK on success, or an error code for invalid parameters, CRC mismatch, etc.
  * 
- * @note The caller is responsible for freeing the memory allocated for *buffer. With ARISR_proto_chunk_clean.
+ * @note The caller is responsible for freeing the memory allocated for *buffer only with return kARISR_OK.
+ * @note With ARISR_proto_chunk_clean can free the memory.
+ * @note If any other error is returned, the buffer is not allocated.
  */
 ARISR_ERR ARISR_proto_unpack(ARISR_CHUNK *buffer, ARISR_CHUNK_RAW *data, const ARISR_AES128_KEY key);
 
@@ -158,7 +180,9 @@ ARISR_ERR ARISR_proto_unpack(ARISR_CHUNK *buffer, ARISR_CHUNK_RAW *data, const A
  * @param key    [in]  The AES-128 key used to encrypt the data section.
  * @return kARISR_OK on success
  * 
- * @note The caller is responsible for freeing the memory allocated for *buffer. With ARISR_proto_raw_chunk_clean.
+ * @note The caller is responsible for freeing the memory allocated for *buffer only with return kARISR_OK.
+ * @note With ARISR_proto_raw_chunk_clean can free the memory.
+ * @note If any other error is returned, the buffer is not allocated.
  */
 ARISR_ERR ARISR_proto_pack(ARISR_CHUNK_RAW *buffer, ARISR_CHUNK *data, const ARISR_AES128_KEY key);
 
@@ -173,7 +197,8 @@ ARISR_ERR ARISR_proto_pack(ARISR_CHUNK_RAW *buffer, ARISR_CHUNK *data, const ARI
  * @param length [out] Pointer to the size of the raw data buffer.
  * @return kARISR_OK on success, or an error code for invalid parameters, CRC mismatch, etc.
  * 
- * @note The caller is responsible for freeing the memory allocated for *buffer.
+ * @note The caller is responsible for freeing the memory allocated for *buffer only with return kARISR_OK.
+ * @note If any other error is returned, the buffer is not allocated.
  */
 ARISR_ERR ARISR_proto_send(ARISR_UINT8 **buffer, ARISR_CHUNK_RAW *data, ARISR_UINT32 *length);
 
