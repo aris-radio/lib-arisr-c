@@ -1,4 +1,4 @@
-LibraryName=libprotoarisr.so
+LibraryName=libprotoarisr
 Protocol=v1
 Library=v1.0.0
 Major=1
