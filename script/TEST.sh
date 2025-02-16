@@ -3,4 +3,4 @@
 # Test the tester
 cd ../test
 
-make clean && make
+make clean && make run
