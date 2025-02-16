@@ -136,7 +136,7 @@ generate: | $(BUILD_OUTPUT)/include $(BUILD_OUTPUT)/lib
 	sync && tar -czf $(ARCHIVE) $(BUILD_OUTPUT)
 	sha256sum $(ARCHIVE) > $(ARCHIVE).sha256
 	sha1sum $(ARCHIVE) > $(ARCHIVE).sha1
-	if command -v gpg >/dev/null 2>&1; then gpg --detach-sign --armor -o $(ARCHIVE).asc $(ARCHIVE); fi
+	# if command -v gpg >/dev/null 2>&1; then gpg --detach-sign --armor -o $(ARCHIVE).asc $(ARCHIVE); fi
 
 # Ensure necessary directories exist
 $(BUILD_OUTPUT)/include $(BUILD_OUTPUT)/lib:

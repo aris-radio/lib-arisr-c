@@ -1,5 +1,5 @@
-# Use an official Debian-based image
-FROM debian:latest
+# Use an official Ubuntu-based image
+FROM ubuntu:22.04
 
 # Install required packages: GCC, Valgrind, Make, Clang, and additional compilers
 RUN apt-get update && apt-get install -y \
